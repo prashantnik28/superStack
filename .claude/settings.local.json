@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-expo-app@latest *)",
+      "Bash(cp -r /Users/nikkiniks/Documents/Nik/Projects/smartStack/tempapp/. /Users/nikkiniks/Documents/Nik/Projects/smartStack/)",
+      "Bash(rm -rf /Users/nikkiniks/Documents/Nik/Projects/smartStack/tempapp)",
+      "Bash(npx expo *)",
+      "Bash(npm install *)",
+      "Bash(mkdir -p /Users/nikkiniks/Documents/Nik/Projects/smartStack/app/\\\\\\(auth\\\\\\) /Users/nikkiniks/Documents/Nik/Projects/smartStack/app/\\\\\\(app\\\\\\)/dashboard /Users/nikkiniks/Documents/Nik/Projects/smartStack/app/\\\\\\(app\\\\\\)/wellbeing /Users/nikkiniks/Documents/Nik/Projects/smartStack/app/\\\\\\(app\\\\\\)/wardrobe /Users/nikkiniks/Documents/Nik/Projects/smartStack/app/\\\\\\(app\\\\\\)/kitchen /Users/nikkiniks/Documents/Nik/Projects/smartStack/app/\\\\\\(app\\\\\\)/calendar /Users/nikkiniks/Documents/Nik/Projects/smartStack/app/\\\\\\(app\\\\\\)/profile /Users/nikkiniks/Documents/Nik/Projects/smartStack/app/\\\\\\(app\\\\\\)/settings)",
+      "Bash(mkdir -p /Users/nikkiniks/Documents/Nik/Projects/smartStack/src/components/ui /Users/nikkiniks/Documents/Nik/Projects/smartStack/src/components/dashboard /Users/nikkiniks/Documents/Nik/Projects/smartStack/src/components/wellbeing /Users/nikkiniks/Documents/Nik/Projects/smartStack/src/components/wardrobe /Users/nikkiniks/Documents/Nik/Projects/smartStack/src/components/kitchen /Users/nikkiniks/Documents/Nik/Projects/smartStack/src/context /Users/nikkiniks/Documents/Nik/Projects/smartStack/src/hooks /Users/nikkiniks/Documents/Nik/Projects/smartStack/src/stores /Users/nikkiniks/Documents/Nik/Projects/smartStack/src/queries /Users/nikkiniks/Documents/Nik/Projects/smartStack/src/lib /Users/nikkiniks/Documents/Nik/Projects/smartStack/src/utils)",
+      "Bash(node *)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(pkill -f \"expo start\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); deps=d.get\\('dependencies',{}\\); [print\\(k,v\\) for k,v in deps.items\\(\\) if 'metro' in k]\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); deps=d.get\\('dependencies',{}\\); [print\\(k,v\\) for k,v in deps.items\\(\\) if 'cli' in k]\")",
+      "Bash(npm uninstall *)",
+      "Bash(xargs -I{} sh -c 'echo \"{}:\"; grep version {} | head -1')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('bin',{}\\)\\)\")",
+      "Bash(ln -sf /Users/nikkiniks/Documents/Nik/Projects/smartStack/node_modules/expo/node_modules/@expo/cli /Users/nikkiniks/Documents/Nik/Projects/smartStack/node_modules/@expo/cli)",
+      "Bash(curl -s http://localhost:8082/status)",
+      "Bash(grep -E \"^\\(expo-blur|expo-linear|react-native-gesture|react-native-screens|react-native-safe|babel-preset-expo\\)$\")",
+      "Bash(ln -sf node_modules/expo/node_modules/@expo/cli node_modules/@expo/cli)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d['version']\\)\")",
+      "Bash(ln -s ../../expo/node_modules/@expo/cli /Users/nikkiniks/Documents/Nik/Projects/smartStack/node_modules/@expo/cli)",
+      "Bash(git remote *)",
+      "Bash(git add *)",
+      "Bash(git rm *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
+    ]
+  }
+}

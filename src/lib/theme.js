@@ -1,0 +1,36 @@
+export const COLORS = {
+  light: {
+    background: '#F7F4FF',
+    surface: '#FFFFFF',
+    card: '#FFFFFF',
+    primary: '#6C63FF',
+    accent: '#FF6B9D',
+    success: '#4CAF82',
+    warning: '#FFB347',
+    danger: '#FF6B6B',
+    textPrimary: '#16163A',
+    textSecondary: '#6B7280',
+    border: 'rgba(108,99,255,0.18)',
+    tabBar: '#FFFFFF',
+    drawerBg: '#FFFFFF',
+    chipBg: '#F0EEFF',
+  },
+  dark: {
+    background: '#0D0D1A',
+    surface: 'rgba(255,255,255,0.07)',
+    card: '#1A1A2E',
+    primary: '#8B7FFF',
+    accent: '#FF8FB3',
+    success: '#4CAF82',
+    warning: '#FFB347',
+    danger: '#FF6B6B',
+    textPrimary: '#F0EEFF',
+    textSecondary: '#9CA3AF',
+    border: 'rgba(255,255,255,0.12)',
+    tabBar: '#0D0D1A',
+    drawerBg: '#1A1A2E',
+    chipBg: 'rgba(108,99,255,0.15)',
+  },
+};
+
+export const SPACING = { xs: 4, sm: 8, md: 12, base: 16, lg: 20, xl: 24, xxl: 32 };

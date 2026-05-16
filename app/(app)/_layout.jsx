@@ -452,7 +452,6 @@ function SettingsDrawer({ visible, onClose }) {
 
   const nav = (route) => { onClose(); setTimeout(() => router.push(route), 300); };
   const ITEMS = [
-    { icon: 'person',          label: 'My Profile',        color: '#6C63FF', action: () => nav('/(app)/profile') },
     { icon: 'shield-checkmark',label: 'Privacy & Security',color: '#4CAF82', action: () => nav('/(app)/settings/privacy') },
     { icon: 'language',        label: 'Language',          color: '#FFB347', value: 'English', action: () => nav('/(app)/settings/language') },
     { icon: 'help-circle',     label: 'Help & Support',    color: '#9CA3AF', action: () => nav('/(app)/settings/help') },

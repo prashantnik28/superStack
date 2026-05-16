@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Modal,
-  ScrollView, Animated, Dimensions, PanResponder, Platform,
+  ScrollView, Animated, Dimensions, PanResponder, Platform, Linking,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { BlurView } from 'expo-blur';
@@ -450,14 +450,15 @@ function SettingsDrawer({ visible, onClose }) {
     setTimeout(() => { logout(); router.replace('/(auth)/welcome'); }, 300);
   };
 
+  const nav = (route) => { router.push(route); onClose(); };
   const ITEMS = [
-    { icon: 'person', label: 'My Profile', color: '#6C63FF', action: () => { router.push('/(app)/profile'); onClose(); } },
-    { icon: 'notifications', label: 'Notifications', color: '#FF6B9D', action: onClose },
-    { icon: 'shield-checkmark', label: 'Privacy & Security', color: '#4CAF82', action: onClose },
-    { icon: 'phone-portrait', label: 'Connected Devices', color: '#FFB347', badge: '2', action: onClose },
-    { icon: 'language', label: 'Language', color: '#6C63FF', value: 'English', action: onClose },
-    { icon: 'help-circle', label: 'Help & Support', color: '#9CA3AF', action: onClose },
-    { icon: 'star', label: 'Rate smartStack', color: '#FFD700', action: onClose },
+    { icon: 'person', label: 'My Profile', color: '#6C63FF', action: () => nav('/(app)/profile') },
+    { icon: 'notifications', label: 'Notifications', color: '#FF6B9D', action: () => nav('/(app)/notifications') },
+    { icon: 'shield-checkmark', label: 'Privacy & Security', color: '#4CAF82', action: () => nav('/(app)/settings/privacy') },
+    { icon: 'phone-portrait', label: 'Connected Devices', color: '#FFB347', badge: '2', action: () => nav('/(app)/settings/devices') },
+    { icon: 'language', label: 'Language', color: '#6C63FF', value: 'English', action: () => nav('/(app)/settings/language') },
+    { icon: 'help-circle', label: 'Help & Support', color: '#9CA3AF', action: () => nav('/(app)/settings/help') },
+    { icon: 'star', label: 'Rate smartStack', color: '#FFD700', action: () => { Linking.openURL('itms-apps://itunes.apple.com/app/id0').catch(() => Linking.openURL('https://apps.apple.com/')); onClose(); } },
   ];
 
   return (
@@ -555,6 +556,10 @@ function getPageConfig(pathname, members) {
     '/wardrobe/suggestions': 'Suggestions',
     '/kitchen/expiry': 'Expiry Tracker',
     '/kitchen/shopping': 'Shopping',
+    '/settings/privacy': 'Privacy & Security',
+    '/settings/devices': 'Connected Devices',
+    '/settings/language': 'Language',
+    '/settings/help': 'Help & Support',
   };
   return { type: 'page', title: TITLES[pathname] || '' };
 }
@@ -696,6 +701,10 @@ export default function AppLayout() {
             <Tabs.Screen name="cctv/index" options={H} />
             <Tabs.Screen name="tracking/index" options={H} />
             <Tabs.Screen name="expenses/index" options={H} />
+            <Tabs.Screen name="settings/privacy" options={H} />
+            <Tabs.Screen name="settings/devices" options={H} />
+            <Tabs.Screen name="settings/language" options={H} />
+            <Tabs.Screen name="settings/help" options={H} />
           </Tabs>
         </View>
 

@@ -77,7 +77,7 @@ const ALL_SERVICES = [
   { id: 'pharmacy',  name: 'Pharmacy',  icon: 'medkit',          color: '#EF4444', route: null },
   { id: 'sweethome', name: 'Sweet Home',icon: 'home',            color: '#8B5CF6', route: null },
   { id: 'fitness',   name: 'Fitness',   icon: 'barbell',         color: '#F59E0B', route: null },
-  { id: 'expenses',  name: 'Expenses',  icon: 'wallet',          color: '#10B981', route: null },
+  { id: 'expenses',  name: 'Expenses',  icon: 'wallet',          color: '#10B981', route: '/(app)/expenses' },
 ];
 
 const NOTIFICATIONS_DATA = [
@@ -541,6 +541,7 @@ function getPageConfig(pathname, members) {
     '/jaap': 'Jaap Counter',
     '/cctv': 'CCTV',
     '/tracking': 'Trackers',
+    '/expenses': 'Expenses',
   };
   if (SERVICES[pathname]) return { type: 'page', title: SERVICES[pathname], backRoute: '/(app)/overview' };
 
@@ -694,10 +695,11 @@ export default function AppLayout() {
             <Tabs.Screen name="kitchen/shopping" options={H} />
             <Tabs.Screen name="cctv/index" options={H} />
             <Tabs.Screen name="tracking/index" options={H} />
+            <Tabs.Screen name="expenses/index" options={H} />
           </Tabs>
         </View>
 
-        {!pathname.includes('/jaap') && !pathname.includes('/cctv') && !pathname.includes('/tracking') && (
+        {!pathname.includes('/jaap') && !pathname.includes('/cctv') && !pathname.includes('/tracking') && !pathname.includes('/expenses') && (
           <BottomNav
             pathname={pathname}
             isDark={isDark}

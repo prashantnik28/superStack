@@ -32,7 +32,7 @@ const FEATURED = {
 const MOST_USED = [
   { id: 'wardrobe',  name: 'Wardrobe',  icon: 'shirt',            color: '#6C63FF', route: '/(app)/wardrobe' },
   { id: 'kitchen',   name: 'Kitchen',   icon: 'restaurant',       color: '#FFB347', route: '/(app)/kitchen' },
-  { id: 'cctv',      name: 'CCTV',      icon: 'videocam',         color: '#6C63FF', route: '/(app)/cctv' },
+  { id: 'expenses',  name: 'Expenses',  icon: 'wallet',           color: '#10B981', route: '/(app)/expenses' },
   { id: 'tracking',  name: 'Tracking',  icon: 'navigate-circle',  color: '#3B82F6', route: '/(app)/tracking' },
 ];
 
@@ -48,7 +48,7 @@ const ALL_SERVICES = [
   { id: 'pharmacy',  name: 'Pharmacy',     icon: 'medkit',          color: '#EF4444', route: null },
   { id: 'sweethome', name: 'Sweet Home',   icon: 'home',            color: '#8B5CF6', route: null },
   { id: 'fitness',   name: 'Fitness Track',icon: 'barbell',         color: '#F59E0B', route: null },
-  { id: 'expenses',  name: 'Expenses',     icon: 'wallet',          color: '#10B981', route: null },
+  { id: 'expenses',  name: 'Expenses',     icon: 'wallet',          color: '#10B981', route: '/(app)/expenses' },
   { id: 'transport', name: 'Transport',    icon: 'car',             color: '#3B82F6', route: null },
   { id: 'more',      name: 'More Soon',    icon: 'ellipsis-horizontal-circle', color: '#9CA3AF', route: null },
 ];

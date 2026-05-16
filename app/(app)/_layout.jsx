@@ -451,11 +451,11 @@ function SettingsDrawer({ visible, onClose }) {
   };
 
   const SUBSCRIBED = [
-    { id: 'c', name: 'Cleaning',      icon: 'sparkles',  color: '#6C63FF', status: 'active',    detail: 'Tomorrow, 10 AM' },
-    { id: 'm', name: 'Milk Delivery', icon: 'water',     color: '#4CAF82', status: 'active',    detail: 'Daily · 7:00 AM' },
-    { id: 'g', name: 'Grocery',       icon: 'cart',      color: '#FFB347', status: 'active',    detail: 'Wed, 3–5 PM' },
-    { id: 'r', name: 'Repair',        icon: 'construct', color: '#FF6B9D', status: 'on-demand', detail: 'On request' },
-    { id: 'l', name: 'Laundry',       icon: 'shirt',     color: '#9C27B0', status: 'active',    detail: 'Pickup: Friday' },
+    { id: 'c', name: 'Cleaning',      icon: 'sparkles',  color: '#6C63FF', status: 'active',    detail: 'Tomorrow, 10 AM', route: '/(app)/services' },
+    { id: 'm', name: 'Milk Delivery', icon: 'water',     color: '#4CAF82', status: 'active',    detail: 'Daily · 7:00 AM', route: '/(app)/services' },
+    { id: 'g', name: 'Grocery',       icon: 'cart',      color: '#FFB347', status: 'active',    detail: 'Wed, 3–5 PM',     route: '/(app)/kitchen/shopping' },
+    { id: 'r', name: 'Repair',        icon: 'construct', color: '#FF6B9D', status: 'on-demand', detail: 'On request',      route: '/(app)/services' },
+    { id: 'l', name: 'Laundry',       icon: 'shirt',     color: '#9C27B0', status: 'active',    detail: 'Pickup: Friday',  route: '/(app)/services' },
   ];
 
   const nav = (route) => { onClose(); setTimeout(() => router.push(route), 300); };
@@ -493,7 +493,7 @@ function SettingsDrawer({ visible, onClose }) {
           <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
             <Text style={[styles.drawerSec, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>SUBSCRIBED SERVICES</Text>
             {SUBSCRIBED.map(svc => (
-              <View key={svc.id} style={styles.drawerItem}>
+              <TouchableOpacity key={svc.id} style={styles.drawerItem} activeOpacity={0.75} onPress={() => nav(svc.route)}>
                 <View style={[styles.drawerItemIcon, { backgroundColor: svc.color + '18' }]}>
                   <Ionicons name={svc.icon} size={18} color={svc.color} />
                 </View>
@@ -502,7 +502,7 @@ function SettingsDrawer({ visible, onClose }) {
                   <Text style={[styles.drawerSvcDetail, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>{svc.detail}</Text>
                 </View>
                 <View style={[styles.drawerSvcDot, { backgroundColor: svc.status === 'active' ? '#4CAF82' : '#FFB347' }]} />
-              </View>
+              </TouchableOpacity>
             ))}
             <Text style={[styles.drawerSec, { color: isDark ? '#9CA3AF' : '#6B7280', marginTop: 8 }]}>ACCOUNT & SETTINGS</Text>
             {ITEMS.map(item => (

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Modal,
-  ScrollView, Animated, Dimensions, PanResponder, Platform, Linking,
+  ScrollView, Animated, Dimensions, PanResponder, Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { BlurView } from 'expo-blur';
@@ -450,15 +450,12 @@ function SettingsDrawer({ visible, onClose }) {
     setTimeout(() => { logout(); router.replace('/(auth)/welcome'); }, 300);
   };
 
-  const nav = (route) => { router.push(route); onClose(); };
+  const nav = (route) => { onClose(); setTimeout(() => router.push(route), 300); };
   const ITEMS = [
-    { icon: 'person', label: 'My Profile', color: '#6C63FF', action: () => nav('/(app)/profile') },
-    { icon: 'notifications', label: 'Notifications', color: '#FF6B9D', action: () => nav('/(app)/notifications') },
-    { icon: 'shield-checkmark', label: 'Privacy & Security', color: '#4CAF82', action: () => nav('/(app)/settings/privacy') },
-    { icon: 'phone-portrait', label: 'Connected Devices', color: '#FFB347', badge: '2', action: () => nav('/(app)/settings/devices') },
-    { icon: 'language', label: 'Language', color: '#6C63FF', value: 'English', action: () => nav('/(app)/settings/language') },
-    { icon: 'help-circle', label: 'Help & Support', color: '#9CA3AF', action: () => nav('/(app)/settings/help') },
-    { icon: 'star', label: 'Rate smartStack', color: '#FFD700', action: () => { Linking.openURL('itms-apps://itunes.apple.com/app/id0').catch(() => Linking.openURL('https://apps.apple.com/')); onClose(); } },
+    { icon: 'person',          label: 'My Profile',        color: '#6C63FF', action: () => nav('/(app)/profile') },
+    { icon: 'shield-checkmark',label: 'Privacy & Security',color: '#4CAF82', action: () => nav('/(app)/settings/privacy') },
+    { icon: 'language',        label: 'Language',          color: '#FFB347', value: 'English', action: () => nav('/(app)/settings/language') },
+    { icon: 'help-circle',     label: 'Help & Support',    color: '#9CA3AF', action: () => nav('/(app)/settings/help') },
   ];
 
   return (

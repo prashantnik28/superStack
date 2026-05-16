@@ -450,6 +450,14 @@ function SettingsDrawer({ visible, onClose }) {
     setTimeout(() => { logout(); router.replace('/(auth)/welcome'); }, 300);
   };
 
+  const SUBSCRIBED = [
+    { id: 'c', name: 'Cleaning',      icon: 'sparkles',  color: '#6C63FF', status: 'active',    detail: 'Tomorrow, 10 AM' },
+    { id: 'm', name: 'Milk Delivery', icon: 'water',     color: '#4CAF82', status: 'active',    detail: 'Daily · 7:00 AM' },
+    { id: 'g', name: 'Grocery',       icon: 'cart',      color: '#FFB347', status: 'active',    detail: 'Wed, 3–5 PM' },
+    { id: 'r', name: 'Repair',        icon: 'construct', color: '#FF6B9D', status: 'on-demand', detail: 'On request' },
+    { id: 'l', name: 'Laundry',       icon: 'shirt',     color: '#9C27B0', status: 'active',    detail: 'Pickup: Friday' },
+  ];
+
   const nav = (route) => { onClose(); setTimeout(() => router.push(route), 300); };
   const ITEMS = [
     { icon: 'shield-checkmark',label: 'Privacy & Security',color: '#4CAF82', action: () => nav('/(app)/settings/privacy') },
@@ -483,7 +491,20 @@ function SettingsDrawer({ visible, onClose }) {
             </View>
           </View>
           <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-            <Text style={[styles.drawerSec, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>ACCOUNT & SETTINGS</Text>
+            <Text style={[styles.drawerSec, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>SUBSCRIBED SERVICES</Text>
+            {SUBSCRIBED.map(svc => (
+              <View key={svc.id} style={styles.drawerItem}>
+                <View style={[styles.drawerItemIcon, { backgroundColor: svc.color + '18' }]}>
+                  <Ionicons name={svc.icon} size={18} color={svc.color} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.drawerItemLabel, { color: isDark ? '#F0EEFF' : '#16163A' }]}>{svc.name}</Text>
+                  <Text style={[styles.drawerSvcDetail, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>{svc.detail}</Text>
+                </View>
+                <View style={[styles.drawerSvcDot, { backgroundColor: svc.status === 'active' ? '#4CAF82' : '#FFB347' }]} />
+              </View>
+            ))}
+            <Text style={[styles.drawerSec, { color: isDark ? '#9CA3AF' : '#6B7280', marginTop: 8 }]}>ACCOUNT & SETTINGS</Text>
             {ITEMS.map(item => (
               <TouchableOpacity key={item.label} style={styles.drawerItem} onPress={item.action}>
                 <View style={[styles.drawerItemIcon, { backgroundColor: item.color + '18' }]}>
@@ -867,5 +888,7 @@ const styles = StyleSheet.create({
   drawerItemIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   drawerItemLabel: { flex: 1, fontSize: 14, fontWeight: '500' },
   drawerItemVal: { fontSize: 12 },
+  drawerSvcDetail: { fontSize: 11, marginTop: 1 },
+  drawerSvcDot: { width: 8, height: 8, borderRadius: 4 },
   appVer: { textAlign: 'center', fontSize: 11, marginTop: 20, paddingHorizontal: 20 },
 });

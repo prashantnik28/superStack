@@ -1,16 +1,9 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useTheme } from '../../../src/context/ThemeContext';
 import GlassCard from '../../../src/components/ui/GlassCard';
 
-const SUB_TABS = [
-  { label: 'Pantry', route: '/(app)/kitchen', icon: 'grid' },
-  { label: 'Scan', route: '/(app)/kitchen/scan', icon: 'barcode' },
-  { label: 'Expiry', route: '/(app)/kitchen/expiry', icon: 'time' },
-  { label: 'Shopping', route: '/(app)/kitchen/shopping', icon: 'cart' },
-];
 
 const EXPIRY_ITEMS = [
   { id: '1', name: 'Greek Yoghurt', daysLeft: 1, qty: '500g', category: 'Dairy', status: 'critical' },
@@ -31,15 +24,6 @@ export default function ExpiryScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
-        {SUB_TABS.map(t => (
-          <TouchableOpacity key={t.label} onPress={() => router.push(t.route)}
-            style={[styles.tab, t.label === 'Expiry' && { borderBottomColor: '#FFB347', borderBottomWidth: 2 }]}>
-            <Ionicons name={t.icon} size={15} color={t.label === 'Expiry' ? '#FFB347' : colors.textSecondary} />
-            <Text style={[styles.tabTxt, { color: t.label === 'Expiry' ? '#FFB347' : colors.textSecondary }]}>{t.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={[styles.h2, { color: colors.textPrimary }]}>Expiry Tracker</Text>
@@ -83,9 +67,6 @@ export default function ExpiryScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  tabs: { paddingHorizontal: 8, borderBottomWidth: 0.5, borderBottomColor: 'rgba(0,0,0,0.1)' },
-  tab: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 12 },
-  tabTxt: { fontSize: 13, fontWeight: '600' },
   content: { padding: 16, gap: 14 },
   h2: { fontSize: 22, fontWeight: '700' },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, marginTop: 4 },

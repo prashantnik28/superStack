@@ -6,11 +6,6 @@ import { useTheme } from '../../../src/context/ThemeContext';
 import GlassCard from '../../../src/components/ui/GlassCard';
 import StatusBadge from '../../../src/components/ui/StatusBadge';
 
-const SUB_TABS = [
-  { label: 'Closet', route: '/(app)/wardrobe', icon: 'shirt' },
-  { label: 'Add Item', route: '/(app)/wardrobe/add-item', icon: 'add-circle' },
-  { label: 'Outfits', route: '/(app)/wardrobe/suggestions', icon: 'sparkles' },
-];
 
 const CATEGORIES = ['All', 'Tops', 'Bottoms', 'Dresses', 'Footwear', 'Accessories'];
 
@@ -30,16 +25,7 @@ export default function WardrobeScreen() {
   const filtered = activeCategory === 'All' ? ITEMS : ITEMS.filter(i => i.category === activeCategory);
 
   return (
-    <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
-        {SUB_TABS.map(t => (
-          <TouchableOpacity key={t.label} onPress={() => router.push(t.route)}
-            style={[styles.tab, t.label === 'Closet' && { borderBottomColor: '#6C63FF', borderBottomWidth: 2 }]}>
-            <Ionicons name={t.icon} size={15} color={t.label === 'Closet' ? '#6C63FF' : colors.textSecondary} />
-            <Text style={[styles.tabTxt, { color: t.label === 'Closet' ? '#6C63FF' : colors.textSecondary }]}>{t.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+    <View style={[styles.flex]}>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
@@ -97,9 +83,6 @@ export default function WardrobeScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  tabs: { paddingHorizontal: 8, borderBottomWidth: 0.5, borderBottomColor: 'rgba(0,0,0,0.1)' },
-  tab: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 12 },
-  tabTxt: { fontSize: 13, fontWeight: '600' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
   h2: { fontSize: 22, fontWeight: '700' },
   sub: { fontSize: 12, marginTop: 2 },

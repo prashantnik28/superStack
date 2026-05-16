@@ -16,7 +16,7 @@ export default function SignupScreen() {
 
   const handleSignup = () => {
     login({ name: name || 'User', email, id: '1' }, 'token-123');
-    router.replace('/(app)/dashboard');
+    router.replace('/(app)/overview');
   };
 
   return (
@@ -31,8 +31,8 @@ export default function SignupScreen() {
 
           <GlassCard style={styles.form}>
             {[
-              { label: 'Full Name', value: name, set: setName, placeholder: 'Priya Sharma' },
-              { label: 'Email', value: email, set: setEmail, placeholder: 'priya@example.com', keyboard: 'email-address' },
+              { label: 'Full Name', value: name, set: setName, placeholder: 'Somya Singh' },
+              { label: 'Email', value: email, set: setEmail, placeholder: 'somya@example.com', keyboard: 'email-address' },
               { label: 'Password', value: password, set: setPassword, placeholder: '••••••••', secure: true },
             ].map(f => (
               <View key={f.label}>

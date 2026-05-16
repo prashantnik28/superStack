@@ -1,16 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useTheme } from '../../../src/context/ThemeContext';
 import GlassCard from '../../../src/components/ui/GlassCard';
 
-const SUB_TABS = [
-  { label: 'Pantry', route: '/(app)/kitchen', icon: 'grid' },
-  { label: 'Scan', route: '/(app)/kitchen/scan', icon: 'barcode' },
-  { label: 'Expiry', route: '/(app)/kitchen/expiry', icon: 'time' },
-  { label: 'Shopping', route: '/(app)/kitchen/shopping', icon: 'cart' },
-];
 
 const INITIAL_ITEMS = [
   { id: '1', name: 'Greek Yoghurt', qty: '500g', category: 'Dairy', done: false },
@@ -40,15 +33,6 @@ export default function ShoppingScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
-        {SUB_TABS.map(t => (
-          <TouchableOpacity key={t.label} onPress={() => router.push(t.route)}
-            style={[styles.tab, t.label === 'Shopping' && { borderBottomColor: '#FFB347', borderBottomWidth: 2 }]}>
-            <Ionicons name={t.icon} size={15} color={t.label === 'Shopping' ? '#FFB347' : colors.textSecondary} />
-            <Text style={[styles.tabTxt, { color: t.label === 'Shopping' ? '#FFB347' : colors.textSecondary }]}>{t.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.titleRow}>
@@ -113,9 +97,6 @@ export default function ShoppingScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  tabs: { paddingHorizontal: 8, borderBottomWidth: 0.5, borderBottomColor: 'rgba(0,0,0,0.1)' },
-  tab: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 12 },
-  tabTxt: { fontSize: 13, fontWeight: '600' },
   content: { padding: 16, gap: 12 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   h2: { fontSize: 22, fontWeight: '700', flex: 1 },

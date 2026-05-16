@@ -14,8 +14,8 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
 
   const handleLogin = () => {
-    login({ name: 'Priya', email: email || 'priya@example.com', id: '1' }, 'token-123');
-    router.replace('/(app)/dashboard');
+    login({ name: 'Somya Singh', email: email || 'somya@example.com', id: '1' }, 'token-123');
+    router.replace('/(app)/overview');
   };
 
   return (
@@ -30,7 +30,7 @@ export default function LoginScreen() {
 
           <GlassCard style={styles.form}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
-            <TextInput style={[styles.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.card }]} placeholder="priya@example.com" placeholderTextColor={colors.textSecondary} keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+            <TextInput style={[styles.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.card }]} placeholder="somya@example.com" placeholderTextColor={colors.textSecondary} keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
             <Text style={[styles.label, { color: colors.textSecondary }]}>Password</Text>
             <TextInput style={[styles.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.card }]} placeholder="••••••••" placeholderTextColor={colors.textSecondary} secureTextEntry value={password} onChangeText={setPassword} />
             <TouchableOpacity style={{ alignSelf: 'flex-end' }}>

@@ -1,71 +1,41 @@
-import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-  createAnimatedComponent,
-  Easing,
-} from 'react-native-reanimated';
-
-const AnimatedView = createAnimatedComponent(View);
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing } from 'react-native';
 
 export default function PulseButton({ onPress, size = 110 }) {
-  const scale1 = useSharedValue(1);
-  const scale2 = useSharedValue(1);
-  const opacity1 = useSharedValue(0.6);
-  const opacity2 = useSharedValue(0.4);
+  const scale1 = useRef(new Animated.Value(1)).current;
+  const scale2 = useRef(new Animated.Value(1)).current;
+  const opacity1 = useRef(new Animated.Value(0.6)).current;
+  const opacity2 = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
-    scale1.value = withRepeat(
-      withTiming(1.6, { duration: 1200, easing: Easing.out(Easing.ease) }),
-      -1,
-      false
+    const ring1 = Animated.loop(
+      Animated.parallel([
+        Animated.timing(scale1, { toValue: 1.6, duration: 1200, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+        Animated.sequence([
+          Animated.timing(opacity1, { toValue: 0.6, duration: 0, useNativeDriver: true }),
+          Animated.timing(opacity1, { toValue: 0, duration: 1200, useNativeDriver: true }),
+        ]),
+      ])
     );
-    opacity1.value = withRepeat(
-      withSequence(
-        withTiming(0.6, { duration: 0 }),
-        withTiming(0, { duration: 1200 })
-      ),
-      -1,
-      false
+    const ring2 = Animated.loop(
+      Animated.parallel([
+        Animated.timing(scale2, { toValue: 1.9, duration: 1600, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+        Animated.sequence([
+          Animated.timing(opacity2, { toValue: 0.4, duration: 0, useNativeDriver: true }),
+          Animated.timing(opacity2, { toValue: 0, duration: 1600, useNativeDriver: true }),
+        ]),
+      ])
     );
-    scale2.value = withRepeat(
-      withTiming(1.9, { duration: 1600, easing: Easing.out(Easing.ease) }),
-      -1,
-      false
-    );
-    opacity2.value = withRepeat(
-      withSequence(
-        withTiming(0.4, { duration: 0 }),
-        withTiming(0, { duration: 1600 })
-      ),
-      -1,
-      false
-    );
+    ring1.start();
+    ring2.start();
+    return () => { ring1.stop(); ring2.stop(); };
   }, []);
-
-  const ring1Style = useAnimatedStyle(() => ({
-    transform: [{ scale: scale1.value }],
-    opacity: opacity1.value,
-  }));
-
-  const ring2Style = useAnimatedStyle(() => ({
-    transform: [{ scale: scale2.value }],
-    opacity: opacity2.value,
-  }));
 
   return (
     <View style={[styles.wrap, { width: size * 2, height: size * 2 }]}>
-      <AnimatedView style={[styles.ring, { width: size, height: size, borderRadius: size / 2, backgroundColor: '#FF6B6B' }, ring2Style]} />
-      <AnimatedView style={[styles.ring, { width: size, height: size, borderRadius: size / 2, backgroundColor: '#FF6B6B' }, ring1Style]} />
-      <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.85}
-        style={[styles.btn, { width: size, height: size, borderRadius: size / 2 }]}
-      >
+      <Animated.View style={[styles.ring, { width: size, height: size, borderRadius: size / 2, backgroundColor: '#FF6B6B', transform: [{ scale: scale2 }], opacity: opacity2 }]} />
+      <Animated.View style={[styles.ring, { width: size, height: size, borderRadius: size / 2, backgroundColor: '#FF6B6B', transform: [{ scale: scale1 }], opacity: opacity1 }]} />
+      <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={[styles.btn, { width: size, height: size, borderRadius: size / 2 }]}>
         <Text style={styles.label}>SOS</Text>
         <Text style={styles.sub}>Hold to send</Text>
       </TouchableOpacity>

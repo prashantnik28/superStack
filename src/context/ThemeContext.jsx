@@ -1,17 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import React, { createContext, useContext, useState } from 'react';
 import { COLORS, SPACING } from '../lib/theme';
 
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const scheme = useColorScheme();
   const [mode, setMode] = useState('light');
-
-  useEffect(() => {
-    if (scheme === 'dark' || scheme === 'light') setMode(scheme);
-  }, [scheme]);
-
   const toggleTheme = () => setMode(m => m === 'light' ? 'dark' : 'light');
   const colors = COLORS[mode] || COLORS.light;
 

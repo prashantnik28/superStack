@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useTheme } from '../../../src/context/ThemeContext';
 import GlassCard from '../../../src/components/ui/GlassCard';
 
-const SUB_TABS = [
-  { label: 'Closet', route: '/(app)/wardrobe', icon: 'shirt' },
-  { label: 'Add Item', route: '/(app)/wardrobe/add-item', icon: 'add-circle' },
-  { label: 'Outfits', route: '/(app)/wardrobe/suggestions', icon: 'sparkles' },
-];
 
 const OUTFITS = [
   {
@@ -48,15 +42,6 @@ export default function SuggestionsScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
-        {SUB_TABS.map(t => (
-          <TouchableOpacity key={t.label} onPress={() => router.push(t.route)}
-            style={[styles.tab, t.label === 'Outfits' && { borderBottomColor: '#6C63FF', borderBottomWidth: 2 }]}>
-            <Ionicons name={t.icon} size={15} color={t.label === 'Outfits' ? '#6C63FF' : colors.textSecondary} />
-            <Text style={[styles.tabTxt, { color: t.label === 'Outfits' ? '#6C63FF' : colors.textSecondary }]}>{t.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.titleRow}>
@@ -108,9 +93,6 @@ export default function SuggestionsScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  tabs: { paddingHorizontal: 8, borderBottomWidth: 0.5, borderBottomColor: 'rgba(0,0,0,0.1)' },
-  tab: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 12 },
-  tabTxt: { fontSize: 13, fontWeight: '600' },
   content: { padding: 16, gap: 16 },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   h2: { fontSize: 22, fontWeight: '700' },

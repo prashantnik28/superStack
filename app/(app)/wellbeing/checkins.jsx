@@ -1,16 +1,9 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useTheme } from '../../../src/context/ThemeContext';
 import GlassCard from '../../../src/components/ui/GlassCard';
 
-const SUB_TABS = [
-  { label: 'Overview', route: '/(app)/wellbeing', icon: 'home' },
-  { label: 'Map', route: '/(app)/wellbeing/tracking', icon: 'map' },
-  { label: 'Check-ins', route: '/(app)/wellbeing/checkins', icon: 'checkmark-circle' },
-  { label: 'SOS', route: '/(app)/wellbeing/sos', icon: 'warning' },
-];
 
 const CHECKINS = [
   { id: '1', name: 'Aarav', color: '#6C63FF', events: [
@@ -30,16 +23,7 @@ const CHECKINS = [
 export default function CheckinsScreen() {
   const { colors } = useTheme();
   return (
-    <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
-        {SUB_TABS.map(t => (
-          <TouchableOpacity key={t.label} onPress={() => router.push(t.route)}
-            style={[styles.tab, t.label === 'Check-ins' && { borderBottomColor: '#FF6B9D', borderBottomWidth: 2 }]}>
-            <Ionicons name={t.icon} size={15} color={t.label === 'Check-ins' ? '#FF6B9D' : colors.textSecondary} />
-            <Text style={[styles.tabTxt, { color: t.label === 'Check-ins' ? '#FF6B9D' : colors.textSecondary }]}>{t.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+    <View style={[styles.flex]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={[styles.h2, { color: colors.textPrimary }]}>Today's Check-ins</Text>
         {CHECKINS.map(member => (
@@ -83,9 +67,6 @@ export default function CheckinsScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  tabs: { paddingHorizontal: 8, borderBottomWidth: 0.5, borderBottomColor: 'rgba(0,0,0,0.1)' },
-  tab: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 12 },
-  tabTxt: { fontSize: 13, fontWeight: '600' },
   content: { padding: 16, gap: 16 },
   h2: { fontSize: 22, fontWeight: '700' },
   card: { padding: 16, gap: 14 },

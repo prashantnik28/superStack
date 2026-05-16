@@ -4,12 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTheme } from '../../../src/context/ThemeContext';
 import GlassCard from '../../../src/components/ui/GlassCard';
-const SUB_TABS = [
-  { label: 'Pantry', route: '/(app)/kitchen', icon: 'grid' },
-  { label: 'Scan', route: '/(app)/kitchen/scan', icon: 'barcode' },
-  { label: 'Expiry', route: '/(app)/kitchen/expiry', icon: 'time' },
-  { label: 'Shopping', route: '/(app)/kitchen/shopping', icon: 'cart' },
-];
 
 const CATEGORIES = ['All', 'Dairy', 'Produce', 'Grains', 'Beverages', 'Snacks'];
 
@@ -34,16 +28,7 @@ export default function KitchenScreen() {
   const expiringSoon = PANTRY.filter(i => i.status !== 'fresh').length;
 
   return (
-    <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
-        {SUB_TABS.map(t => (
-          <TouchableOpacity key={t.label} onPress={() => router.push(t.route)}
-            style={[styles.tab, t.label === 'Pantry' && { borderBottomColor: '#FFB347', borderBottomWidth: 2 }]}>
-            <Ionicons name={t.icon} size={15} color={t.label === 'Pantry' ? '#FFB347' : colors.textSecondary} />
-            <Text style={[styles.tabTxt, { color: t.label === 'Pantry' ? '#FFB347' : colors.textSecondary }]}>{t.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+    <View style={[styles.flex]}>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
@@ -117,9 +102,6 @@ export default function KitchenScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  tabs: { paddingHorizontal: 8, borderBottomWidth: 0.5, borderBottomColor: 'rgba(0,0,0,0.1)' },
-  tab: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 12 },
-  tabTxt: { fontSize: 13, fontWeight: '600' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
   h2: { fontSize: 22, fontWeight: '700' },
   sub: { fontSize: 12, marginTop: 2 },

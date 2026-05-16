@@ -31,7 +31,7 @@ const SETTING_SECTIONS = [
     items: [
       { label: 'Push Notifications', icon: 'notifications', color: '#6C63FF', toggle: true, defaultOn: true },
       { label: 'Location Sharing', icon: 'location', color: '#4CAF82', toggle: true, defaultOn: true },
-      { label: 'Dark Mode', icon: 'moon', color: '#16163A', toggle: true, defaultOn: false },
+      { label: 'Dark Mode', icon: 'moon', color: '#6C63FF', toggle: true, defaultOn: false },
       { label: 'Email Digests', icon: 'mail', color: '#FFB347', toggle: true, defaultOn: false },
     ],
   },
@@ -58,11 +58,14 @@ const SETTING_SECTIONS = [
 const maxTasks = Math.max(...ACTIVITY.map(a => a.tasks));
 
 export default function ProfileScreen() {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, toggleTheme } = useTheme();
   const { user, logout } = useAuthStore();
-  const [toggles, setToggles] = useState({ 'Push Notifications': true, 'Location Sharing': true, 'Dark Mode': false, 'Email Digests': false });
+  const [toggles, setToggles] = useState({ 'Push Notifications': true, 'Location Sharing': true, 'Email Digests': false });
 
-  const toggleSwitch = (label) => setToggles(prev => ({ ...prev, [label]: !prev[label] }));
+  const toggleSwitch = (label) => {
+    if (label === 'Dark Mode') { toggleTheme(); return; }
+    setToggles(prev => ({ ...prev, [label]: !prev[label] }));
+  };
 
   const handleLogout = () => {
     logout();
@@ -70,7 +73,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView style={[styles.scroll, { backgroundColor: colors.background }]} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.scroll]} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
       {/* Hero Card */}
       <GlassCard style={[styles.heroCard, { backgroundColor: isDark ? '#1A1A2E' : '#6C63FF' }]}>
@@ -79,8 +82,8 @@ export default function ProfileScreen() {
             <Text style={styles.heroAvatarTxt}>P</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.heroName}>{user?.name || 'Priya Sharma'}</Text>
-            <Text style={styles.heroEmail}>{user?.email || 'priya@example.com'}</Text>
+            <Text style={styles.heroName}>{user?.name || 'Somya Singh'}</Text>
+            <Text style={styles.heroEmail}>{user?.email || 'somya@example.com'}</Text>
             <View style={styles.heroPlanRow}>
               <Ionicons name="star" size={12} color="#FFD700" />
               <Text style={styles.heroPlan}>Family Pro · Active</Text>
@@ -192,10 +195,10 @@ export default function ProfileScreen() {
                   <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{item.label}</Text>
                   {item.toggle ? (
                     <Switch
-                      value={toggles[item.label] ?? item.defaultOn}
+                      value={item.label === 'Dark Mode' ? isDark : (toggles[item.label] ?? item.defaultOn)}
                       onValueChange={() => toggleSwitch(item.label)}
                       trackColor={{ false: colors.border, true: colors.primary + 'AA' }}
-                      thumbColor={toggles[item.label] ? colors.primary : '#ccc'}
+                      thumbColor={(item.label === 'Dark Mode' ? isDark : toggles[item.label]) ? colors.primary : '#ccc'}
                       ios_backgroundColor={colors.border}
                     />
                   ) : item.value ? (

@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import GlassCard from '../../../src/components/ui/GlassCard';
 import { useTheme } from '../../../src/context/ThemeContext';
 
@@ -13,7 +12,7 @@ const MEMBERS = [
 export default function TrackingScreen() {
   const { colors } = useTheme();
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container]}>
       <View style={[styles.mapArea, { backgroundColor: colors.primary + '10' }]}>
         <Ionicons name="map" size={56} color={colors.primary} />
         <Text style={[styles.mapTitle, { color: colors.textPrimary }]}>Live GPS Map</Text>

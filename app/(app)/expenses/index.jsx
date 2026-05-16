@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
-  FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, Circle, G } from 'react-native-svg';
@@ -1342,17 +1341,7 @@ export default function ExpensesScreen() {
   }, []);
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <View style={styles.header}>
-        <View>
-          <Text style={[styles.h1, { color: colors.textPrimary }]}>Expenses</Text>
-          <Text style={[styles.sub, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>Track, budget, and save smarter</Text>
-        </View>
-        <View style={[styles.brandIcon, { backgroundColor: ACCENT + '22' }]}>
-          <Ionicons name="wallet" size={22} color={ACCENT} />
-        </View>
-      </View>
-
+    <View style={styles.root}>
       <TabsBar active={activeTab} onChange={setActiveTab} isDark={isDark} />
 
       {activeTab === 'Overview' && (
@@ -1381,8 +1370,4 @@ export default function ExpensesScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
-  h1: { fontSize: 26, fontWeight: '800' },
-  sub: { fontSize: 13, fontWeight: '500', marginTop: 2 },
-  brandIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
 });

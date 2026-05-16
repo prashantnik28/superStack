@@ -155,6 +155,49 @@ function BottomNav({ pathname, isDark, colors, insets, onPressCenter }) {
 }
 
 // ── Info Panel ─────────────────────────────────────────────────────────────────
+const MEMBER_STATUS = [
+  { status: 'At Home',   color: '#4CAF82', icon: 'home' },
+  { status: 'At Office', color: '#3B82F6', icon: 'business' },
+  { status: 'At School', color: '#FFB347', icon: 'school' },
+  { status: 'At School', color: '#FFB347', icon: 'school' },
+];
+
+const SUGGESTIONS = [
+  { id: 'barcode',  icon: 'barcode',     color: '#FFB347', label: 'Scan Barcode', desc: 'Add to grocery',   route: '/(app)/kitchen/scan' },
+  { id: 'grocery',  icon: 'cart',        color: '#4CAF82', label: 'Add Grocery',  desc: 'Quick list update', route: '/(app)/kitchen/shopping' },
+  { id: 'reminder', icon: 'alarm',       color: '#6C63FF', label: 'Reminder',     desc: 'Set family alert',  route: '/(app)/calendar' },
+  { id: 'expiry',   icon: 'time',        color: '#EF4444', label: 'Expiry Check', desc: 'Items expiring',    route: '/(app)/kitchen/expiry' },
+  { id: 'report',   icon: 'stats-chart', color: '#FF6B9D', label: 'Report',       desc: 'Weekly summary',    route: '/(app)/wellbeing' },
+  { id: 'checkin',  icon: 'location',    color: '#06B6D4', label: 'Check In',     desc: 'Share location',    route: '/(app)/wellbeing/tracking' },
+];
+
+const AI_SUGGESTIONS = [
+  { id: 1,  icon: 'calendar',        color: '#6C63FF', category: 'Task',      text: 'Pick children from school today at 3:30 PM',                   action: 'Add Task',   route: '/(app)/calendar' },
+  { id: 2,  icon: 'cart',            color: '#4CAF82', category: 'Grocery',   text: 'Milk is running low — reorder before Thursday',                action: 'Add Item',   route: '/(app)/kitchen/shopping' },
+  { id: 3,  icon: 'alarm',           color: '#FFB347', category: 'Reminder',  text: "Aarav's football practice tomorrow at 4:00 PM",                action: 'Remind',     route: '/(app)/calendar' },
+  { id: 4,  icon: 'medkit',          color: '#EF4444', category: 'Health',    text: "Myra's next doctor checkup is due this week",                  action: 'Schedule',   route: '/(app)/wellbeing' },
+  { id: 5,  icon: 'sparkles',        color: '#9C27B0', category: 'Service',   text: 'Home cleaning is scheduled tomorrow at 10 AM',                 action: 'View',       route: '/(app)/services' },
+  { id: 6,  icon: 'school',          color: '#3B82F6', category: 'School',    text: "Annual day event on Friday — don't forget costumes",           action: 'Add Task',   route: '/(app)/calendar' },
+  { id: 7,  icon: 'wallet',          color: '#10B981', category: 'Finance',   text: 'Monthly grocery budget is 80% used with 10 days left',         action: 'View',       route: '/(app)/expenses' },
+  { id: 8,  icon: 'heart',           color: '#FF6B9D', category: 'Wellbeing', text: 'No mood check-in from Rajan today — send a nudge',             action: 'Nudge',      route: '/(app)/wellbeing' },
+  { id: 9,  icon: 'time',            color: '#F59E0B', category: 'Expiry',    text: '3 kitchen items expiring in 2 days — review now',              action: 'Check',      route: '/(app)/kitchen/expiry' },
+  { id: 10, icon: 'navigate-circle', color: '#06B6D4', category: 'Location',  text: 'Aarav arrived at school at 8:15 AM — all good',                action: 'Track',      route: '/(app)/wellbeing/tracking' },
+  { id: 11, icon: 'shirt',           color: '#8B5CF6', category: 'Wardrobe',  text: "Myra hasn't logged an outfit in 3 days — check wardrobe",      action: 'View',       route: '/(app)/wardrobe' },
+  { id: 12, icon: 'barbell',         color: '#F97316', category: 'Fitness',   text: 'Family fitness goal is 60% complete this week — keep going!',  action: 'View',       route: '/(app)/wellbeing' },
+  { id: 13, icon: 'water',           color: '#0EA5E9', category: 'Delivery',  text: 'Milk delivery arrives tomorrow at 7 AM — gate unlocked?',      action: 'Confirm',    route: '/(app)/services' },
+  { id: 14, icon: 'restaurant',      color: '#FF6B9D', category: 'Meal',      text: 'Plan dinner for tonight — check pantry for ingredients',       action: 'Check',      route: '/(app)/kitchen' },
+  { id: 15, icon: 'construct',       color: '#DC2626', category: 'Repair',    text: 'AC service is overdue — last serviced 8 months ago',           action: 'Schedule',   route: '/(app)/services' },
+];
+
+const QUICK_ACTIONS = [
+  { icon: 'add-circle', label: 'Add Task',    color: '#6C63FF', route: '/(app)/calendar' },
+  { icon: 'scan',       label: 'Scan',        color: '#FFB347', route: '/(app)/kitchen/scan' },
+  { icon: 'location',   label: 'Check In',    color: '#4CAF82', route: '/(app)/wellbeing/tracking' },
+  { icon: 'calendar',   label: 'Schedule',    color: '#FF6B9D', route: '/(app)/calendar' },
+  { icon: 'wallet',     label: 'Expense',     color: '#10B981', route: '/(app)/expenses' },
+  { icon: 'heart',      label: 'Wellbeing',   color: '#EF4444', route: '/(app)/wellbeing' },
+];
+
 function InfoPanel({ visible, onClose, insets }) {
   const { isDark, toggleTheme } = useTheme();
   const { members } = useFamilyStore();
@@ -188,133 +231,244 @@ function InfoPanel({ visible, onClose, insets }) {
   }, [visible]);
 
   const panelTranslate = Animated.add(slideY, panOffset);
-  const txt = isDark ? '#F0EEFF' : '#16163A';
-  const sub = isDark ? '#9CA3AF' : '#6B7280';
-  const border = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(108,99,255,0.1)';
+  const txt  = isDark ? '#F0EEFF' : '#16163A';
+  const sub  = isDark ? '#9CA3AF' : '#6B7280';
+  const bdr  = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(108,99,255,0.09)';
+  const navAndClose = (route) => { onClose(); setTimeout(() => router.push(route), 300); };
 
   return (
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
       <View style={{ flex: 1 }}>
-        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)', opacity: backdropOpacity }]}>
+        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.45)', opacity: backdropOpacity }]}>
           <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
         </Animated.View>
 
         <Animated.View style={[styles.infoPanel, {
           height: MAX_PANEL_H,
-          backgroundColor: Platform.OS !== 'ios' ? (isDark ? '#12122A' : '#FFFFFF') : 'transparent',
-          paddingTop: insets.top + 8,
+          backgroundColor: isDark ? 'transparent' : '#FFFFFF',
+          paddingTop: insets.top + 4,
           transform: [{ translateY: panelTranslate }],
         }]}>
-          {Platform.OS === 'ios' && (
+          {isDark && (
             <>
-              <BlurView intensity={isDark ? 40 : 28} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(10,5,22,0.62)' : 'rgba(248,244,255,0.72)' }]} />
+              <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(10,6,24,0.55)' }]} />
             </>
           )}
 
+          {/* drag handle */}
           <View style={styles.dragHandleArea} {...handlePan.panHandlers}>
-            <View style={[styles.panelHandle, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)' }]} />
+            <View style={[styles.panelHandle, { backgroundColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(108,99,255,0.18)' }]} />
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.panelContent} bounces={false}>
+
+            {/* ── Header ── */}
             <View style={styles.panelHeaderRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.panelTitle, { color: txt }]}>Quick Overview</Text>
-                <Text style={[styles.panelSubtitle, { color: sub }]}>smartStack Family Hub</Text>
+              <View style={[styles.panelLogoWrap, { backgroundColor: '#6C63FF18' }]}>
+                <Ionicons name="home" size={14} color="#6C63FF" />
               </View>
-              <TouchableOpacity onPress={onClose} style={[styles.closeBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#F0EEFF' }]}>
-                <Ionicons name="close" size={16} color={sub} />
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                  <Text style={[styles.panelTitle, { color: txt }]}>Family Hub</Text>
+                  <View style={styles.livePill}>
+                    <View style={styles.liveDot} />
+                    <Text style={styles.liveTxt}>LIVE</Text>
+                  </View>
+                </View>
+                <Text style={[styles.panelSubtitle, { color: sub }]}>Sat, 16 May 2026 · 4 members active</Text>
+              </View>
+              <TouchableOpacity onPress={onClose} style={[styles.closeBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(108,99,255,0.10)' }]}>
+                <Ionicons name="close" size={14} color={sub} />
               </TouchableOpacity>
             </View>
 
-            <View style={[styles.statsBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(108,99,255,0.06)', borderColor: border }]}>
+            {/* ── Stats single row ── */}
+            <View style={[styles.statsBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.10)' : '#F7F5FF', borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(108,99,255,0.08)' }]}>
               {[
-                { label: 'Tasks', value: '5/8', icon: 'checkmark-circle', color: '#4CAF82' },
-                { label: 'Expiring', value: '3', icon: 'warning', color: '#FFB347' },
-                { label: 'Members', value: `${members.length}`, icon: 'people', color: '#6C63FF' },
-                { label: 'Alerts', value: '3', icon: 'notifications', color: '#FF6B9D' },
+                { label: 'Tasks',    value: '5/8',               icon: 'checkmark-circle', color: '#4CAF82' },
+                { label: 'Expiring', value: '3',                 icon: 'warning',          color: '#FFB347' },
+                { label: 'Members',  value: `${members.length}`, icon: 'people',           color: '#6C63FF' },
+                { label: 'Alerts',   value: '3',                 icon: 'notifications',    color: '#FF6B9D' },
               ].map((q, i, arr) => (
                 <React.Fragment key={q.label}>
                   <View style={styles.statItem}>
-                    <Ionicons name={q.icon} size={17} color={q.color} />
-                    <Text style={[styles.statVal, { color: txt }]}>{q.value}</Text>
+                    <View style={[styles.statIcon, { backgroundColor: q.color + '18' }]}>
+                      <Ionicons name={q.icon} size={13} color={q.color} />
+                    </View>
+                    <Text style={[styles.statVal, { color: q.color }]}>{q.value}</Text>
                     <Text style={[styles.statLabel, { color: sub }]}>{q.label}</Text>
                   </View>
-                  {i < arr.length - 1 && <View style={[styles.statDivider, { backgroundColor: border }]} />}
+                  {i < arr.length - 1 && <View style={[styles.statDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />}
                 </React.Fragment>
               ))}
             </View>
 
-            <Text style={[styles.panelSec, { color: sub }]}>FAMILY STATUS</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingBottom: 2 }}>
-              {members.map(m => (
-                <View key={m.id} style={{ alignItems: 'center', gap: 4, position: 'relative' }}>
-                  <View style={[styles.panelAvatar, { backgroundColor: m.color }]}>
-                    <Text style={styles.panelAvatarTxt}>{m.name.slice(0, 2).toUpperCase()}</Text>
+            {/* ── Family Status ── */}
+            <View style={styles.secRow}>
+              <View style={[styles.secDot, { backgroundColor: '#4CAF82' }]} />
+              <Text style={[styles.panelSec, { color: sub }]}>FAMILY STATUS</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 2 }}>
+              {members.map((m, idx) => {
+                const ms = MEMBER_STATUS[idx % MEMBER_STATUS.length];
+                return (
+                  <View key={m.id} style={[styles.memberCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.58)' }]}>
+                    <View style={[styles.memberColorBar, { backgroundColor: ms.color }]} />
+                    <View style={styles.memberCardInner}>
+                      <View style={{ position: 'relative' }}>
+                        <View style={[styles.panelAvatar, { backgroundColor: m.color }]}>
+                          <Text style={styles.panelAvatarTxt}>{m.name.slice(0, 2).toUpperCase()}</Text>
+                        </View>
+                        <View style={[styles.onlineDot, { backgroundColor: ms.color, borderColor: isDark ? '#0F0B1E' : '#fff' }]} />
+                      </View>
+                      <Text style={[styles.panelMemberName, { color: txt }]} numberOfLines={1}>{m.name.split(' ')[0]}</Text>
+                      <View style={[styles.statusPill, { backgroundColor: ms.color + '1A' }]}>
+                        <Ionicons name={ms.icon} size={8} color={ms.color} />
+                        <Text style={[styles.statusPillTxt, { color: ms.color }]}>{ms.status}</Text>
+                      </View>
+                    </View>
                   </View>
-                  <View style={[styles.onlineDot, { backgroundColor: '#4CAF82', borderColor: isDark ? '#10051E' : '#F8F4FF' }]} />
-                  <Text style={[styles.panelMemberName, { color: txt }]}>{m.name}</Text>
-                  <Text style={[styles.panelMemberStatus, { color: sub }]}>{m.status || 'Active'}</Text>
+                );
+              })}
+            </ScrollView>
+
+            {/* ── Suggested ── */}
+            <View style={styles.secRow}>
+              <View style={[styles.secDot, { backgroundColor: '#6C63FF' }]} />
+              <Text style={[styles.panelSec, { color: sub }]}>SUGGESTED FOR YOU</Text>
+              <View style={[styles.aiBadge, { backgroundColor: '#6C63FF' }]}>
+                <Ionicons name="sparkles" size={9} color="#fff" />
+                <Text style={styles.aiBadgeTxt}>AI</Text>
+              </View>
+            </View>
+
+            {/* Run Family Scan — gradient card */}
+            <TouchableOpacity activeOpacity={0.88} onPress={() => navAndClose('/(app)/wellbeing')} style={styles.scanCardWrap}>
+              <LinearGradient colors={['#7C3AED', '#4F46E5', '#3B82F6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.scanCard}>
+                <View style={[styles.scanIcon, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
+                  <Ionicons name="scan-circle" size={26} color="#fff" />
                 </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={styles.scanTitle}>Run Family Scan</Text>
+                    <View style={styles.scanBadge}>
+                      <Ionicons name="sparkles" size={8} color="#fff" />
+                      <Text style={styles.scanBadgeTxt}>AI</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.scanDesc}>Attendance · Location · Wellbeing · Grocery</Text>
+                  <View style={{ flexDirection: 'row', gap: 5, marginTop: 7 }}>
+                    {[
+                      { icon: 'school',   label: '2 at school' },
+                      { icon: 'navigate', label: 'All tracked'  },
+                      { icon: 'heart',    label: 'Reports ok'   },
+                    ].map(chip => (
+                      <View key={chip.label} style={styles.scanChip}>
+                        <Ionicons name={chip.icon} size={9} color="rgba(255,255,255,0.9)" />
+                        <Text style={styles.scanChipTxt}>{chip.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+                <View style={styles.scanRunBtn}>
+                  <Ionicons name="play" size={11} color="#4F46E5" />
+                  <Text style={styles.scanRunTxt}>Scan</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Suggestion cards */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
+              {SUGGESTIONS.map(s => (
+                <TouchableOpacity
+                  key={s.id}
+                  style={[styles.suggestCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.58)' }]}
+                  activeOpacity={0.8}
+                  onPress={() => navAndClose(s.route)}
+                >
+                  <View style={[styles.suggestTopLine, { backgroundColor: s.color }]} />
+                  <View style={styles.suggestCardInner}>
+                    <View style={[styles.suggestIcon, { backgroundColor: s.color + '18' }]}>
+                      <Ionicons name={s.icon} size={17} color={s.color} />
+                    </View>
+                    <Text style={[styles.suggestLabel, { color: txt }]}>{s.label}</Text>
+                    <Text style={[styles.suggestDesc, { color: sub }]}>{s.desc}</Text>
+                  </View>
+                </TouchableOpacity>
               ))}
             </ScrollView>
 
-            <Text style={[styles.panelSec, { color: sub }]}>QUICK ACTIONS</Text>
-            <View style={styles.actionsRow}>
-              {[
-                { icon: 'add-circle', label: 'Add Task', color: '#6C63FF' },
-                { icon: 'scan', label: 'Scan Item', color: '#FFB347' },
-                { icon: 'location', label: 'Check In', color: '#4CAF82' },
-                { icon: 'calendar', label: 'Schedule', color: '#FF6B9D' },
-              ].map(a => (
-                <TouchableOpacity key={a.label} style={[styles.actionBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : a.color + '10' }]} activeOpacity={0.7}>
-                  <View style={[styles.actionIcon, { backgroundColor: a.color + '22' }]}>
-                    <Ionicons name={a.icon} size={20} color={a.color} />
+            {/* ── Quick Actions ── */}
+            <View style={styles.secRow}>
+              <View style={[styles.secDot, { backgroundColor: '#FFB347' }]} />
+              <Text style={[styles.panelSec, { color: sub }]}>QUICK ACTIONS</Text>
+            </View>
+            <View style={styles.actionsGrid}>
+              {QUICK_ACTIONS.map(a => (
+                <TouchableOpacity
+                  key={a.label}
+                  style={[styles.actionBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.58)' }]}
+                  activeOpacity={0.75}
+                  onPress={() => navAndClose(a.route)}
+                >
+                  <View style={[styles.actionIcon, { backgroundColor: a.color + '18' }]}>
+                    <Ionicons name={a.icon} size={18} color={a.color} />
                   </View>
                   <Text style={[styles.actionLabel, { color: txt }]}>{a.label}</Text>
+                  <Ionicons name="chevron-forward" size={11} color={sub} style={{ marginLeft: 'auto' }} />
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={[styles.panelSec, { color: sub }]}>ALL SERVICES</Text>
-            <View style={styles.servicesGrid}>
-              {ALL_SERVICES.map(s => {
-                const isAct = activeService === s.id;
-                return (
-                  <TouchableOpacity
-                    key={s.id}
-                    onPress={() => { if (s.route) { switchService(s.id); router.push(s.route); onClose(); } }}
-                    style={[styles.svcTile, { backgroundColor: isAct ? s.color : (isDark ? 'rgba(255,255,255,0.06)' : s.color + '10') }]}
-                    activeOpacity={0.75}
-                  >
-                    <View style={[styles.svcTileIcon, { backgroundColor: isAct ? 'rgba(255,255,255,0.22)' : s.color + '25' }]}>
-                      <Ionicons name={s.icon} size={16} color={isAct ? '#fff' : s.color} />
+            {/* ── AI Suggestions ── */}
+            <View style={styles.secRow}>
+              <View style={[styles.secDot, { backgroundColor: '#6C63FF' }]} />
+              <Text style={[styles.panelSec, { color: sub }]}>AI SUGGESTIONS</Text>
+              <View style={[styles.aiBadge, { backgroundColor: '#6C63FF' }]}>
+                <Ionicons name="sparkles" size={9} color="#fff" />
+                <Text style={styles.aiBadgeTxt}>Smart</Text>
+              </View>
+            </View>
+            <View style={[styles.aiCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : '#fff', borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(108,99,255,0.08)' }]}>
+              {AI_SUGGESTIONS.map((s, i) => (
+                <View key={s.id}>
+                  {i > 0 && <View style={[styles.aiDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]} />}
+                  <TouchableOpacity style={styles.aiRow} activeOpacity={0.7} onPress={() => navAndClose(s.route)}>
+                    <View style={[styles.aiIconWrap, { backgroundColor: s.color + '18' }]}>
+                      <Ionicons name={s.icon} size={13} color={s.color} />
                     </View>
-                    <Text style={[styles.svcTileName, { color: isAct ? '#fff' : txt }]} numberOfLines={1}>{s.name}</Text>
-                    {!s.route && <Text style={[styles.soonTxt, { color: isAct ? 'rgba(255,255,255,0.7)' : sub }]}>Soon</Text>}
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.aiCategory, { color: s.color }]}>{s.category}</Text>
+                      <Text style={[styles.aiText, { color: txt }]}>{s.text}</Text>
+                    </View>
+                    <View style={[styles.aiActionChip, { backgroundColor: s.color + '15' }]}>
+                      <Text style={[styles.aiActionTxt, { color: s.color }]}>{s.action}</Text>
+                    </View>
                   </TouchableOpacity>
-                );
-              })}
+                </View>
+              ))}
             </View>
 
+            {/* ── Appearance ── */}
             <TouchableOpacity
               onPress={toggleTheme}
-              style={[styles.themeRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(108,99,255,0.06)', borderColor: border }]}
+              style={[styles.themeRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.58)' }]}
               activeOpacity={0.8}
             >
-              <View style={[styles.themeIconWrap, { backgroundColor: isDark ? '#A78BFA22' : '#FFB34722' }]}>
-                <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={isDark ? '#A78BFA' : '#FFB347'} />
+              <View style={[styles.themeIconWrap, { backgroundColor: isDark ? '#A78BFA18' : '#FFB34718' }]}>
+                <Ionicons name={isDark ? 'moon' : 'sunny'} size={16} color={isDark ? '#A78BFA' : '#FFB347'} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.themeLabel, { color: txt }]}>{isDark ? 'Dark Mode' : 'Light Mode'}</Text>
                 <Text style={[styles.themeSub, { color: sub }]}>Tap to switch</Text>
               </View>
-              <View style={[styles.togglePill, { backgroundColor: isDark ? '#6C63FF' : '#E5E7EB' }]}>
+              <View style={[styles.togglePill, { backgroundColor: isDark ? '#6C63FF' : '#D1D5DB' }]}>
                 <View style={[styles.toggleThumb, { transform: [{ translateX: isDark ? 16 : 0 }], backgroundColor: isDark ? '#fff' : '#9CA3AF' }]} />
               </View>
             </TouchableOpacity>
 
-            <View style={{ height: 32 }} />
+            <View style={{ height: 28 }} />
           </ScrollView>
         </Animated.View>
       </View>
@@ -501,7 +655,6 @@ function SettingsDrawer({ visible, onClose }) {
                   <Text style={[styles.drawerItemLabel, { color: isDark ? '#F0EEFF' : '#16163A' }]}>{svc.name}</Text>
                   <Text style={[styles.drawerSvcDetail, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>{svc.detail}</Text>
                 </View>
-                <View style={[styles.drawerSvcDot, { backgroundColor: svc.status === 'active' ? '#4CAF82' : '#FFB347' }]} />
               </TouchableOpacity>
             ))}
             <Text style={[styles.drawerSec, { color: isDark ? '#9CA3AF' : '#6B7280', marginTop: 8 }]}>ACCOUNT & SETTINGS</Text>
@@ -797,48 +950,127 @@ const styles = StyleSheet.create({
     marginTop: -22,
   },
 
-  closeBtn: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  closeBtn: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
 
   // Info Panel
   infoPanel: {
     position: 'absolute', top: 0, left: 0, right: 0,
-    borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
+    borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
     overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.3, shadowRadius: 24, elevation: 24,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.25, shadowRadius: 28, elevation: 28,
   },
-  dragHandleArea: { alignItems: 'center', paddingVertical: 10 },
-  panelHandle: { width: 44, height: 4, borderRadius: 2 },
-  panelContent: { paddingHorizontal: 20, gap: 16, paddingBottom: 20 },
-  panelHeaderRow: { flexDirection: 'row', alignItems: 'center' },
-  panelTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
-  panelSubtitle: { fontSize: 12, marginTop: 2 },
-  statsBar: { flexDirection: 'row', borderRadius: 12, padding: 14, borderWidth: 0.5 },
+  dragHandleArea: { alignItems: 'center', paddingVertical: 8 },
+  panelHandle: { width: 36, height: 3, borderRadius: 2 },
+  panelContent: { paddingHorizontal: 14, gap: 12, paddingBottom: 16 },
+  panelHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  panelLogoWrap: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  panelTitle: { fontSize: 16, fontWeight: '800', letterSpacing: -0.3 },
+  panelSubtitle: { fontSize: 10, marginTop: 1 },
+
+  // Header live badge
+  livePill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#4CAF8220', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 99 },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#4CAF82' },
+  liveTxt: { fontSize: 8, fontWeight: '800', color: '#4CAF82', letterSpacing: 0.5 },
+
+  // Section row label
+  secRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  secDot: { width: 6, height: 6, borderRadius: 3 },
+  panelSec: { fontSize: 9, fontWeight: '700', letterSpacing: 1.2, flex: 1 },
+
+  // Stats single row
+  statsBar: {
+    flexDirection: 'row', borderRadius: 14, paddingVertical: 11, paddingHorizontal: 6,
+    borderWidth: 0.5,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 6, elevation: 3,
+  },
   statItem: { flex: 1, alignItems: 'center', gap: 4 },
-  statVal: { fontSize: 16, fontWeight: '800' },
-  statLabel: { fontSize: 10, fontWeight: '600', textAlign: 'center' },
-  statDivider: { width: 0.5, marginVertical: 4 },
-  panelSec: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2 },
-  panelAvatar: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  panelAvatarTxt: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  onlineDot: { position: 'absolute', bottom: 22, right: 0, width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
-  panelMemberName: { fontSize: 12, fontWeight: '700' },
-  panelMemberStatus: { fontSize: 10 },
-  actionsRow: { flexDirection: 'row', gap: 10 },
-  actionBtn: { flex: 1, borderRadius: 12, padding: 10, alignItems: 'center', gap: 6 },
-  actionIcon: { width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  actionLabel: { fontSize: 11, fontWeight: '600', textAlign: 'center' },
-  servicesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  svcTile: { width: '22%', padding: 10, borderRadius: 12, alignItems: 'center', gap: 5 },
-  svcTileIcon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  svcTileName: { fontSize: 10, fontWeight: '600', textAlign: 'center' },
-  soonTxt: { fontSize: 8, fontWeight: '600' },
-  themeRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, borderWidth: 0.5 },
-  themeIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  themeLabel: { fontSize: 14, fontWeight: '600' },
-  themeSub: { fontSize: 11, marginTop: 1 },
-  togglePill: { width: 38, height: 22, borderRadius: 11, justifyContent: 'center', paddingHorizontal: 2 },
-  toggleThumb: { width: 18, height: 18, borderRadius: 9 },
+  statIcon: { width: 26, height: 26, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
+  statVal: { fontSize: 13, fontWeight: '800' },
+  statLabel: { fontSize: 8, fontWeight: '600' },
+  statDivider: { width: StyleSheet.hairlineWidth, marginVertical: 4 },
+
+  // Member cards
+  memberCard: {
+    width: 80, borderRadius: 13, overflow: 'hidden',
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.55)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 4,
+  },
+  memberColorBar: { height: 3, width: '100%' },
+  memberCardInner: { paddingVertical: 9, paddingHorizontal: 8, alignItems: 'center', gap: 5 },
+  panelAvatar: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+  panelAvatarTxt: { color: '#fff', fontWeight: '800', fontSize: 12 },
+  onlineDot: { position: 'absolute', bottom: 0, right: -1, width: 10, height: 10, borderRadius: 5, borderWidth: 2 },
+  panelMemberName: { fontSize: 10, fontWeight: '700', textAlign: 'center' },
+  statusPill: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 5, paddingVertical: 2, borderRadius: 99 },
+  statusPillTxt: { fontSize: 8, fontWeight: '700' },
+
+  // AI badge
+  aiBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 5, paddingVertical: 2, borderRadius: 6 },
+  aiBadgeTxt: { color: '#fff', fontSize: 8, fontWeight: '800', letterSpacing: 0.3 },
+
+  // Scan card (gradient)
+  scanCardWrap: {
+    borderRadius: 16, overflow: 'hidden',
+    shadowColor: '#6C63FF', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.30, shadowRadius: 14, elevation: 8,
+  },
+  scanCard: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingRight: 14, paddingVertical: 14, paddingLeft: 12 },
+  scanIcon: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  scanTitle: { fontSize: 13, fontWeight: '800', color: '#fff' },
+  scanDesc: { fontSize: 10, marginTop: 2, color: 'rgba(255,255,255,0.75)' },
+  scanBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: 'rgba(255,255,255,0.22)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  scanBadgeTxt: { fontSize: 8, fontWeight: '800', color: '#fff' },
+  scanChip: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 99, backgroundColor: 'rgba(255,255,255,0.18)' },
+  scanChipTxt: { fontSize: 8, fontWeight: '700', color: 'rgba(255,255,255,0.9)' },
+  scanRunBtn: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 11, paddingVertical: 8, borderRadius: 10, backgroundColor: '#fff' },
+  scanRunTxt: { color: '#4F46E5', fontSize: 11, fontWeight: '800' },
+
+  // Suggestion cards
+  suggestCard: {
+    width: 86, borderRadius: 12, overflow: 'hidden',
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.55)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 5, elevation: 3,
+  },
+  suggestTopLine: { height: 3, width: '100%' },
+  suggestCardInner: { padding: 10, gap: 5 },
+  suggestIcon: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  suggestLabel: { fontSize: 10, fontWeight: '700' },
+  suggestDesc: { fontSize: 9, lineHeight: 13 },
+
+  // Quick actions — 2-col horizontal rows
+  actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  actionBtn: {
+    width: '47.8%', flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12,
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.55)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 5, elevation: 3,
+  },
+  actionIcon: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  actionLabel: { fontSize: 11, fontWeight: '700', flex: 1 },
+
+  // AI Suggestions list
+  aiCard: {
+    borderRadius: 16, overflow: 'hidden', borderWidth: 0.5,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 4,
+  },
+  aiRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 11 },
+  aiIconWrap: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  aiCategory: { fontSize: 9, fontWeight: '800', letterSpacing: 0.3, marginBottom: 2 },
+  aiText: { fontSize: 12, fontWeight: '500', lineHeight: 16 },
+  aiDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 14 },
+  aiActionChip: { paddingHorizontal: 9, paddingVertical: 5, borderRadius: 99 },
+  aiActionTxt: { fontSize: 10, fontWeight: '700' },
+  soonTxt: { fontSize: 7, fontWeight: '700' },
+  themeRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, padding: 11, borderRadius: 12,
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.55)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 5, elevation: 3,
+  },
+  themeIconWrap: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  themeLabel: { fontSize: 12, fontWeight: '700' },
+  themeSub: { fontSize: 10, marginTop: 1 },
+  togglePill: { width: 36, height: 20, borderRadius: 10, justifyContent: 'center', paddingHorizontal: 2 },
+  toggleThumb: { width: 16, height: 16, borderRadius: 8 },
 
   // Notif Panel
   notifPanel: {

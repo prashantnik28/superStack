@@ -30,8 +30,19 @@
     },
     "plugins": [
       "expo-router",
-      ["expo-camera", { "cameraPermission": "Allow smartStack to access your camera." }],
-      ["expo-location", { "locationAlwaysAndWhenInUsePermission": "Allow smartStack to use your location." }]
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow smartStack to access your camera."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow smartStack to use your location."
+        }
+      ],
+      "expo-secure-store"
     ],
     "scheme": "smartstack"
   }

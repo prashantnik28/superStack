@@ -186,7 +186,7 @@ export default function ServicesScreen() {
                 <TouchableOpacity
                   key={s.id}
                   style={[styles.appTile, { width: tileW }]}
-                  onPress={() => isAvail && router.push(s.route)}
+                  onPress={() => { if (isAvail) router.push(s.route); }}
                   activeOpacity={isAvail ? 0.75 : 1}
                 >
                   {/* App icon */}

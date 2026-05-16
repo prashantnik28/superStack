@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Animated, Easing,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from 'expo-router';
 import { useTheme } from '../../../src/context/ThemeContext';
 import GlassCard from '../../../src/components/ui/GlassCard';
 
@@ -90,10 +91,15 @@ function EventCard({ ev, colors, isDark, last }) {
 
 export default function CalendarScreen() {
   const { colors, isDark } = useTheme();
+  const scrollRef = useRef(null);
 
   const [year,  setYear]  = useState(TODAY_YEAR);
   const [month, setMonth] = useState(TODAY_MONTH);
   const [sel,   setSel]   = useState(TODAY_DATE);
+
+  useFocusEffect(useCallback(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, []));
 
   const divColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
 
@@ -143,7 +149,7 @@ export default function CalendarScreen() {
   const isSel   = (d) => d === sel;
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
       {/* ── Month navigation ── */}
       <GlassCard style={styles.calCard}>

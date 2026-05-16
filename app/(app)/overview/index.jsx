@@ -252,7 +252,11 @@ export default function Overview() {
                 </View>
 
                 {/* Row 2: Expenses (full width) */}
-                <View style={[styles.bentoCell, styles.bentoExpenses, { backgroundColor: isDark ? 'rgba(16,185,129,0.10)' : '#EEFFF8' }]}>
+                <TouchableOpacity
+                  style={[styles.bentoCell, styles.bentoExpenses, { backgroundColor: isDark ? 'rgba(16,185,129,0.10)' : '#EEFFF8' }]}
+                  onPress={() => router.push('/(app)/expenses')}
+                  activeOpacity={0.85}
+                >
                   <View style={[styles.bentoCellIcon, { backgroundColor: '#10B98120' }]}>
                     <Ionicons name="wallet" size={13} color="#10B981" />
                   </View>
@@ -260,7 +264,8 @@ export default function Overview() {
                     <Text style={[styles.bentoCellTitle, { color: colors.textPrimary }]}>Expenses</Text>
                     <Text style={[styles.bentoCellMetric, { color: '#10B981' }]}>₹45,230</Text>
                   </View>
-                </View>
+                  <Ionicons name="chevron-forward" size={12} color="#10B981" />
+                </TouchableOpacity>
               </View>
             </View>
 

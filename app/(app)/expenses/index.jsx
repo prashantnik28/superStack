@@ -295,7 +295,7 @@ function TabsBar({ active, onChange, isDark }) {
         const isActive = active === t;
         return (
           <TouchableOpacity key={t} onPress={() => onChange(t)} activeOpacity={0.8} style={[tabsStyles.tab, isActive && { backgroundColor: ACCENT }]}>
-            <Text style={[tabsStyles.txt, { color: isActive ? '#fff' : isDark ? '#F0EEFF' : ACCENT }]} numberOfLines={1}>
+            <Text style={[tabsStyles.txt, { color: isActive ? '#fff' : isDark ? '#F0EEFF' : ACCENT }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
               {t}
             </Text>
           </TouchableOpacity>
@@ -577,7 +577,7 @@ function TransactionsTab({ expenses, onDelete, onAdd, isDark, colors }) {
         </GlassCard>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={txStyles.catRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={txStyles.chipScroll} contentContainerStyle={txStyles.catRow}>
         <TouchableOpacity
           onPress={() => setFilterCat('all')}
           style={[txStyles.catChip, { backgroundColor: filterCat === 'all' ? ACCENT : isDark ? 'rgba(108,99,255,0.18)' : '#F0EEFF' }]}>
@@ -597,7 +597,7 @@ function TransactionsTab({ expenses, onDelete, onAdd, isDark, colors }) {
         })}
       </ScrollView>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={txStyles.listScroll} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
         {grouped.length === 0 ? (
           <View style={txStyles.empty}>
             <View style={[txStyles.emptyIcon, { backgroundColor: ACCENT + '15' }]}>
@@ -655,9 +655,11 @@ const txStyles = StyleSheet.create({
   searchWrap: { marginHorizontal: 16, marginTop: 14 },
   searchCard: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, gap: 8 },
   searchInput: { flex: 1, fontSize: 14, fontWeight: '500', paddingVertical: 2 },
+  chipScroll: { flexGrow: 0 },
   catRow: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
   catChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, marginRight: 8 },
   catTxt: { fontSize: 12, fontWeight: '700' },
+  listScroll: { flex: 1 },
   groupLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5, marginBottom: 8, marginLeft: 4 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12 },
   desc: { fontSize: 14, fontWeight: '700' },

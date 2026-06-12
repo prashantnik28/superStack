@@ -67,8 +67,8 @@ export default function ProfileScreen() {
     setToggles(prev => ({ ...prev, [label]: !prev[label] }));
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.replace('/(auth)/welcome');
   };
 
@@ -79,11 +79,11 @@ export default function ProfileScreen() {
       <GlassCard style={[styles.heroCard, { backgroundColor: isDark ? '#111111' : '#6C63FF' }]}>
         <View style={styles.heroInner}>
           <View style={styles.heroAvatar}>
-            <Text style={styles.heroAvatarTxt}>P</Text>
+            <Text style={styles.heroAvatarTxt}>{(user?.name || 'U')[0].toUpperCase()}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.heroName}>{user?.name || 'Somya Singh'}</Text>
-            <Text style={styles.heroEmail}>{user?.email || 'somya@example.com'}</Text>
+            <Text style={styles.heroName}>{user?.name || 'Your Name'}</Text>
+            <Text style={styles.heroEmail}>{user?.email || ''}</Text>
             <View style={styles.heroPlanRow}>
               <Ionicons name="star" size={12} color="#FFD700" />
               <Text style={styles.heroPlan}>Family Pro · Active</Text>

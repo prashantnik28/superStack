@@ -64,7 +64,15 @@
       "Bash(xargs kill -9)",
       "Bash(lsof -ti:8082)",
       "Bash(npm i *)",
-      "Bash(claude *)"
+      "Bash(claude *)",
+      "Bash(nest --version)",
+      "Bash(nest new *)",
+      "Bash(npm run *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(pkill -f \"nest start\")",
+      "Bash(pkill -f \"ts-node\")",
+      "Bash(echo \"Server PID: $!\")",
+      "Bash(ipconfig getifaddr *)"
     ]
   }
 }

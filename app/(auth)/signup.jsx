@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useAuthStore } from '../../src/stores/useAuthStore';
@@ -12,6 +13,7 @@ import GlassCard from '../../src/components/ui/GlassCard';
 WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_CLIENT_ID = '806565486713-3s682bf657vmb0omlfqplh7r55941plq.apps.googleusercontent.com';
+const redirectUri = 'https://auth.expo.io/@prashantnik/smartstack';
 
 export default function SignupScreen() {
   const { colors } = useTheme();
@@ -26,6 +28,7 @@ export default function SignupScreen() {
     clientId: GOOGLE_CLIENT_ID,
     iosClientId: GOOGLE_CLIENT_ID,
     androidClientId: GOOGLE_CLIENT_ID,
+    redirectUri,
   });
 
   React.useEffect(() => {

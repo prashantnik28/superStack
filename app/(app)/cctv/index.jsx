@@ -168,7 +168,7 @@ export default function CCTVScreen() {
                   </TouchableOpacity>
 
                   {/* Cam 4 — offline */}
-                  <View style={[styles.gridCell, { width: camW, backgroundColor: '#1A1A2E' }]}>
+                  <View style={[styles.gridCell, { width: camW, backgroundColor: '#111111' }]}>
                     <View style={styles.offlineCell}>
                       <Ionicons name="wifi-off" size={22} color="#4B5563" />
                       <Text style={styles.offlineTxt}>Offline</Text>

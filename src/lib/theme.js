@@ -16,9 +16,9 @@ export const COLORS = {
     chipBg: '#F0EEFF',
   },
   dark: {
-    background: '#0D0D1A',
+    background: '#000000',
     surface: 'rgba(255,255,255,0.07)',
-    card: '#1A1A2E',
+    card: '#111111',
     primary: '#8B7FFF',
     accent: '#FF8FB3',
     success: '#4CAF82',
@@ -27,8 +27,8 @@ export const COLORS = {
     textPrimary: '#F0EEFF',
     textSecondary: '#9CA3AF',
     border: 'rgba(255,255,255,0.12)',
-    tabBar: '#0D0D1A',
-    drawerBg: '#1A1A2E',
+    tabBar: '#000000',
+    drawerBg: '#111111',
     chipBg: 'rgba(108,99,255,0.15)',
   },
 };

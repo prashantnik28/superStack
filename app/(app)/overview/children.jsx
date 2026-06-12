@@ -83,7 +83,7 @@ export default function ChildrenScreen() {
                       ? <Image source={child.image} style={styles.childAvatarImg} />
                       : <Text style={styles.childInitials}>{child.name.slice(0, 2).toUpperCase()}</Text>
                     }
-                    <View style={[styles.onlineDot, { borderColor: isDark ? '#0D0D1A' : '#fff' }]} />
+                    <View style={[styles.onlineDot, { borderColor: isDark ? '#000000' : '#fff' }]} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.childName, { color: colors.textPrimary }]}>{child.name}</Text>

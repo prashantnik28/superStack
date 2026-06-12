@@ -1,7 +1,8 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Animated, Easing, Image, useWindowDimensions,
+  RefreshControl, DeviceEventEmitter,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -72,6 +73,8 @@ export default function Overview() {
   const { width: screenW } = useWindowDimensions();
   const glanceItemW = Math.floor((screenW - 2 * PAD - 20) / 5);
   const mountAnim = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const cctvPlayer = useVideoPlayer(require('../../../assets/cctvfootages/cctv3.mp4'), p => {
     p.loop = true;
@@ -88,13 +91,35 @@ export default function Overview() {
     }).start();
   }, []);
 
+  // Scroll to top when home tab tapped while already on home
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('scrollToTop', () => {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    });
+    return () => sub.remove();
+  }, []);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1200);
+  }, []);
+
   const divColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.primary}
+          colors={[colors.primary]}
+        />
+      }
     >
       <Animated.View style={{
         opacity: mountAnim,

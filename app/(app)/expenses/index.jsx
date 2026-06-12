@@ -178,17 +178,37 @@ const pbStyles = StyleSheet.create({
 
 function StatChip({ label, value, color, isDark }) {
   return (
-    <GlassCard style={[chipStyles.card, { backgroundColor: isDark ? undefined : '#FFFFFF' }]}>
+    <View style={[chipStyles.card, {
+      backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : '#FFFFFF',
+      shadowColor: color,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0 : 0.12,
+      shadowRadius: 8,
+      elevation: isDark ? 0 : 4,
+    }]}>
+      <View style={[chipStyles.dot, { backgroundColor: color + '25' }]}>
+        <View style={[chipStyles.dotInner, { backgroundColor: color }]} />
+      </View>
       <Text style={[chipStyles.value, { color }]}>{value}</Text>
       <Text style={[chipStyles.label, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>{label}</Text>
-    </GlassCard>
+    </View>
   );
 }
 
 const chipStyles = StyleSheet.create({
-  card: { flex: 1, paddingVertical: 14, paddingHorizontal: 10, alignItems: 'center', marginHorizontal: 4 },
-  value: { fontSize: 17, fontWeight: '800', marginBottom: 4 },
-  label: { fontSize: 11, fontWeight: '600', letterSpacing: 0.3 },
+  card: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    marginHorizontal: 4,
+    borderRadius: 16,
+    gap: 4,
+  },
+  dot: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
+  dotInner: { width: 10, height: 10, borderRadius: 5 },
+  value: { fontSize: 15, fontWeight: '800' },
+  label: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
 });
 
 function CategoryIcon({ catId, size = 38 }) {
@@ -265,7 +285,7 @@ function FAB({ onPress }) {
       onPress={onPress}
       style={fabStyles.wrap}>
       <Animated.View style={[fabStyles.btn, { transform: [{ scale }] }]}>
-        <Ionicons name="add" size={28} color="#fff" />
+        <Ionicons name="add" size={24} color="#fff" />
       </Animated.View>
     </TouchableOpacity>
   );
@@ -274,9 +294,9 @@ function FAB({ onPress }) {
 const fabStyles = StyleSheet.create({
   wrap: { position: 'absolute', bottom: 28, right: 22 },
   btn: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
@@ -350,8 +370,6 @@ function OverviewTab({ expenses, budgets, onAdd, onSeeAll, onAskAI, isDark, colo
       .slice(0, 4);
   }, [byCategory, budgets]);
 
-  const recent = useMemo(() => [...expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5), [expenses]);
-
   const insight = useMemo(() => {
     const overBudgetCats = CATEGORIES.filter((c) => (byCategory[c.id] || 0) > (budgets[c.id] || 0));
     if (overBudgetCats.length > 0) {
@@ -381,17 +399,23 @@ function OverviewTab({ expenses, budgets, onAdd, onSeeAll, onAskAI, isDark, colo
 
   return (
     <ScrollView style={ovStyles.scroll} contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
-      <GlassCard style={ovStyles.hero}>
+
+      {/* ── Hero Card: all summary info in one white card ── */}
+      <GlassCard style={[ovStyles.hero, { backgroundColor: isDark ? undefined : '#FFFFFF' }]}>
         <View style={ovStyles.heroTop}>
           <View style={{ flex: 1 }}>
+            <View style={[ovStyles.heroMonthBadge, { backgroundColor: isDark ? 'rgba(108,99,255,0.18)' : '#F0EEFF' }]}>
+              <Text style={[ovStyles.heroMonthTxt, { color: ACCENT }]}>MAY 2026</Text>
+            </View>
             <Text style={[ovStyles.heroLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>SPENT THIS MONTH</Text>
             <Text style={[ovStyles.heroAmount, { color: colors.textPrimary }]}>{formatINR(totalSpent)}</Text>
             <Text style={[ovStyles.heroBudget, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>
               of {formatINR(totalBudget)} budget
             </Text>
           </View>
-          <DonutChart data={donutData} size={140} />
+          <DonutChart data={donutData} size={116} />
         </View>
+
         <View style={ovStyles.heroProgressWrap}>
           <View style={[ovStyles.heroProgressBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#EEF0FB' }]}>
             <Animated.View style={[ovStyles.heroProgressFill, { width: widthInterp }]} />
@@ -403,36 +427,28 @@ function OverviewTab({ expenses, budgets, onAdd, onSeeAll, onAskAI, isDark, colo
             <Text style={[ovStyles.heroProgressTxt, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>{formatINR(remaining)} left</Text>
           </View>
         </View>
-      </GlassCard>
 
-      <View style={ovStyles.chipRow}>
-        <StatChip label="REMAINING" value={formatINR(remaining)} color="#4CAF82" isDark={isDark} />
-        <StatChip label="THIS WEEK" value={formatINR(thisWeek)} color={ACCENT} isDark={isDark} />
-        <StatChip label="AVG / DAY" value={formatINR(avgPerDay)} color="#FFB347" isDark={isDark} />
-      </View>
+        <View style={[ovStyles.heroDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : '#F0F0F5' }]} />
 
-      <GlassCard style={ovStyles.insight}>
-        <View style={ovStyles.insightHeader}>
-          <View style={[ovStyles.insightIcon, { backgroundColor: ACCENT + '22' }]}>
-            <Ionicons name="sparkles" size={18} color={ACCENT} />
+        <View style={ovStyles.heroStatsRow}>
+          <View style={ovStyles.heroStat}>
+            <Text style={[ovStyles.heroStatVal, { color: '#4CAF82' }]}>{formatINR(remaining)}</Text>
+            <Text style={[ovStyles.heroStatLbl, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>Remaining</Text>
           </View>
-          <Text style={[ovStyles.insightTitle, { color: colors.textPrimary }]}>AI Insight</Text>
+          <View style={[ovStyles.heroStatDiv, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : '#F0F0F5' }]} />
+          <View style={ovStyles.heroStat}>
+            <Text style={[ovStyles.heroStatVal, { color: ACCENT }]}>{formatINR(thisWeek)}</Text>
+            <Text style={[ovStyles.heroStatLbl, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>This Week</Text>
+          </View>
+          <View style={[ovStyles.heroStatDiv, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : '#F0F0F5' }]} />
+          <View style={ovStyles.heroStat}>
+            <Text style={[ovStyles.heroStatVal, { color: '#FFB347' }]}>{formatINR(avgPerDay)}</Text>
+            <Text style={[ovStyles.heroStatLbl, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>Avg / Day</Text>
+          </View>
         </View>
-        <Text style={[ovStyles.insightTxt, { color: isDark ? '#D6D1FF' : '#3F3D56' }]}>{insight}</Text>
-        <TouchableOpacity onPress={onAskAI} style={ovStyles.insightLink}>
-          <Text style={[ovStyles.insightLinkTxt, { color: ACCENT }]}>Chat with AI Advisor</Text>
-          <Ionicons name="arrow-forward" size={14} color={ACCENT} />
-        </TouchableOpacity>
       </GlassCard>
 
-      <GlassCard style={ovStyles.section}>
-        <View style={ovStyles.sectionHeader}>
-          <Text style={[ovStyles.sectionTitle, { color: colors.textPrimary }]}>This Week</Text>
-          <Text style={[ovStyles.sectionMeta, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>{formatINR(thisWeek)}</Text>
-        </View>
-        <WeeklyBarChart expenses={expenses} isDark={isDark} />
-      </GlassCard>
-
+      {/* ── Top Categories ── */}
       <GlassCard style={ovStyles.section}>
         <Text style={[ovStyles.sectionTitle, { color: colors.textPrimary, marginBottom: 14 }]}>Top Categories</Text>
         {topCats.map((c) => {
@@ -455,55 +471,78 @@ function OverviewTab({ expenses, budgets, onAdd, onSeeAll, onAskAI, isDark, colo
         })}
       </GlassCard>
 
+      {/* ── This Week ── */}
       <GlassCard style={ovStyles.section}>
         <View style={ovStyles.sectionHeader}>
-          <Text style={[ovStyles.sectionTitle, { color: colors.textPrimary }]}>Recent Transactions</Text>
-          <TouchableOpacity onPress={onSeeAll} style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={[ovStyles.seeAll, { color: ACCENT }]}>See All</Text>
-            <Ionicons name="chevron-forward" size={14} color={ACCENT} />
-          </TouchableOpacity>
+          <Text style={[ovStyles.sectionTitle, { color: colors.textPrimary }]}>This Week</Text>
+          <Text style={[ovStyles.sectionMeta, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>{formatINR(thisWeek)}</Text>
         </View>
-        {recent.map((e) => {
-          const cat = CAT_MAP[e.category] || CAT_MAP.others;
-          return (
-            <View key={e.id} style={ovStyles.txnRow}>
-              <CategoryIcon catId={e.category} size={36} />
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={[ovStyles.txnDesc, { color: colors.textPrimary }]} numberOfLines={1}>
-                  {e.description}
-                </Text>
-                <Text style={[ovStyles.txnCat, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>
-                  {cat.label} • {dateLabel(e.date)}
-                </Text>
-              </View>
-              <Text style={[ovStyles.txnAmt, { color: colors.textPrimary }]}>-{formatINR(e.amount)}</Text>
-            </View>
-          );
-        })}
+        <WeeklyBarChart expenses={expenses} isDark={isDark} />
       </GlassCard>
 
-      <FAB onPress={onAdd} />
+      {/* ── AI Insight ── */}
+      <GlassCard style={[ovStyles.insight, { borderLeftWidth: 3, borderLeftColor: ACCENT }]}>
+        <View style={ovStyles.insightHeader}>
+          <View style={[ovStyles.insightIcon, { backgroundColor: ACCENT + '22' }]}>
+            <Ionicons name="sparkles" size={18} color={ACCENT} />
+          </View>
+          <Text style={[ovStyles.insightTitle, { color: colors.textPrimary }]}>AI Insight</Text>
+          <View style={[ovStyles.insightBadge, { backgroundColor: ACCENT + '18' }]}>
+            <Text style={[ovStyles.insightBadgeTxt, { color: ACCENT }]}>Live</Text>
+          </View>
+        </View>
+        <Text style={[ovStyles.insightTxt, { color: isDark ? '#D6D1FF' : '#3F3D56' }]}>{insight}</Text>
+        <TouchableOpacity onPress={onAskAI} style={ovStyles.insightLink}>
+          <Text style={[ovStyles.insightLinkTxt, { color: ACCENT }]}>Chat with AI Advisor</Text>
+          <Ionicons name="arrow-forward" size={14} color={ACCENT} />
+        </TouchableOpacity>
+      </GlassCard>
+
     </ScrollView>
   );
 }
 
 const ovStyles = StyleSheet.create({
   scroll: { flex: 1 },
-  hero: { marginHorizontal: 16, marginTop: 14, padding: 18 },
+  hero: {
+    marginHorizontal: 16,
+    marginTop: 14,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  heroMonthBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginBottom: 8,
+  },
+  heroMonthTxt: { fontSize: 10, fontWeight: '800', letterSpacing: 0.8 },
   heroTop: { flexDirection: 'row', alignItems: 'center' },
   heroLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1 },
-  heroAmount: { fontSize: 32, fontWeight: '800', marginTop: 4 },
-  heroBudget: { fontSize: 13, fontWeight: '500', marginTop: 2 },
-  heroProgressWrap: { marginTop: 18 },
-  heroProgressBg: { height: 10, borderRadius: 5, overflow: 'hidden' },
-  heroProgressFill: { height: '100%', backgroundColor: ACCENT, borderRadius: 5 },
-  heroProgressMeta: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
+  heroAmount: { fontSize: 32, fontWeight: '800', marginTop: 3, letterSpacing: -0.5 },
+  heroBudget: { fontSize: 13, fontWeight: '500', marginTop: 3 },
+  heroProgressWrap: { marginTop: 16 },
+  heroProgressBg: { height: 8, borderRadius: 4, overflow: 'hidden' },
+  heroProgressFill: { height: '100%', backgroundColor: ACCENT, borderRadius: 4 },
+  heroProgressMeta: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 7 },
   heroProgressTxt: { fontSize: 11, fontWeight: '600' },
-  chipRow: { flexDirection: 'row', marginHorizontal: 12, marginTop: 14 },
+  heroDivider: { height: 1, marginVertical: 14 },
+  heroStatsRow: { flexDirection: 'row', alignItems: 'center' },
+  heroStat: { flex: 1, alignItems: 'center', gap: 3 },
+  heroStatDiv: { width: 1, height: 28, borderRadius: 1 },
+  heroStatVal: { fontSize: 15, fontWeight: '800' },
+  heroStatLbl: { fontSize: 10, fontWeight: '600', letterSpacing: 0.2 },
   insight: { marginHorizontal: 16, marginTop: 14, padding: 16 },
   insightHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   insightIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
-  insightTitle: { fontSize: 15, fontWeight: '800' },
+  insightTitle: { fontSize: 15, fontWeight: '800', flex: 1 },
+  insightBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
+  insightBadgeTxt: { fontSize: 10, fontWeight: '800', letterSpacing: 0.3 },
   insightTxt: { fontSize: 13, lineHeight: 19, marginBottom: 12 },
   insightLink: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   insightLinkTxt: { fontSize: 12, fontWeight: '700', marginRight: 4 },
@@ -644,8 +683,6 @@ function TransactionsTab({ expenses, onDelete, onAdd, isDark, colors }) {
           ))
         )}
       </ScrollView>
-
-      <FAB onPress={onAdd} />
     </View>
   );
 }
@@ -1095,7 +1132,7 @@ Always tailor advice to this specific data. If the user is over budget in a cate
         </ScrollView>
       )}
 
-      <View style={[aiStyles.inputBar, { backgroundColor: isDark ? '#0D0D1A' : '#FFFFFF', borderTopColor: isDark ? 'rgba(255,255,255,0.08)' : '#EEE' }]}>
+      <View style={[aiStyles.inputBar, { backgroundColor: isDark ? '#000000' : '#FFFFFF', borderTopColor: isDark ? 'rgba(255,255,255,0.08)' : '#EEE' }]}>
         <View style={[aiStyles.inputWrap, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F0EEFF' }]}>
           <TextInput
             value={input}
@@ -1202,93 +1239,101 @@ function AddExpenseModal({ visible, onClose, onSave, isDark, colors }) {
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView style={addStyles.bg} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <TouchableOpacity activeOpacity={1} onPress={onClose} style={addStyles.backdrop} />
-        <View style={[addStyles.sheet, { backgroundColor: isDark ? '#1A1A2E' : '#FFFFFF' }]}>
+        <View style={[addStyles.sheet, { backgroundColor: isDark ? '#111111' : '#FFFFFF' }]}>
           <View style={addStyles.handle} />
           <Text style={[addStyles.title, { color: colors.textPrimary }]}>Add Expense</Text>
 
-          <View style={[addStyles.amountWrap, { backgroundColor: isDark ? 'rgba(108,99,255,0.12)' : '#F0EEFF' }]}>
-            <Text style={[addStyles.amountCurrency, { color: ACCENT }]}>₹</Text>
-            <TextInput
-              value={amount}
-              onChangeText={setAmount}
-              placeholder="0"
-              keyboardType="decimal-pad"
-              placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-              style={[addStyles.amountInput, { color: colors.textPrimary }]}
-              autoFocus
-            />
-          </View>
+          <ScrollView
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={addStyles.scrollContent}
+          >
+            <View style={[addStyles.amountWrap, { backgroundColor: isDark ? 'rgba(108,99,255,0.12)' : '#F0EEFF' }]}>
+              <Text style={[addStyles.amountCurrency, { color: ACCENT }]}>₹</Text>
+              <TextInput
+                value={amount}
+                onChangeText={setAmount}
+                placeholder="0"
+                keyboardType="decimal-pad"
+                placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+                style={[addStyles.amountInput, { color: colors.textPrimary }]}
+                autoFocus
+              />
+            </View>
 
-          <Text style={[addStyles.fieldLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>DESCRIPTION</Text>
-          <View style={[addStyles.fieldInputWrap, { borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }]}>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder="What was it for?"
-              placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-              style={[addStyles.fieldInput, { color: colors.textPrimary }]}
-            />
-          </View>
+            <Text style={[addStyles.fieldLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>DESCRIPTION</Text>
+            <View style={[addStyles.fieldInputWrap, { borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }]}>
+              <TextInput
+                value={description}
+                onChangeText={setDescription}
+                placeholder="What was it for?"
+                placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+                style={[addStyles.fieldInput, { color: colors.textPrimary }]}
+              />
+            </View>
 
-          <Text style={[addStyles.fieldLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>CATEGORY</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={addStyles.catRow}>
-            {CATEGORIES.map((c) => {
-              const active = category === c.id;
-              return (
-                <TouchableOpacity
-                  key={c.id}
-                  onPress={() => setCategory(c.id)}
-                  style={[
-                    addStyles.catChip,
-                    {
-                      backgroundColor: active ? c.color : isDark ? 'rgba(255,255,255,0.05)' : '#F8F7FF',
-                      borderColor: active ? c.color : isDark ? 'rgba(255,255,255,0.08)' : '#EEE',
-                    },
-                  ]}>
-                  <Ionicons name={c.icon} size={16} color={active ? '#fff' : c.color} />
-                  <Text style={[addStyles.catChipTxt, { color: active ? '#fff' : colors.textPrimary }]}>{c.label.split(' ')[0]}</Text>
-                </TouchableOpacity>
-              );
-            })}
+            <Text style={[addStyles.fieldLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>CATEGORY</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={addStyles.catRow}>
+              {CATEGORIES.map((c) => {
+                const active = category === c.id;
+                return (
+                  <TouchableOpacity
+                    key={c.id}
+                    onPress={() => setCategory(c.id)}
+                    style={[
+                      addStyles.catChip,
+                      {
+                        backgroundColor: active ? c.color : isDark ? 'rgba(255,255,255,0.05)' : '#F8F7FF',
+                        borderColor: active ? c.color : isDark ? 'rgba(255,255,255,0.08)' : '#EEE',
+                      },
+                    ]}>
+                    <Ionicons name={c.icon} size={14} color={active ? '#fff' : c.color} />
+                    <Text style={[addStyles.catChipTxt, { color: active ? '#fff' : colors.textPrimary }]}>{c.label.split(' ')[0]}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <Text style={[addStyles.fieldLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>PAYMENT METHOD</Text>
+            <View style={addStyles.methodRow}>
+              {PAYMENT_METHODS.map((m) => {
+                const active = method === m.id;
+                return (
+                  <TouchableOpacity
+                    key={m.id}
+                    onPress={() => setMethod(m.id)}
+                    style={[
+                      addStyles.methodBtn,
+                      {
+                        backgroundColor: active ? ACCENT : isDark ? 'rgba(255,255,255,0.05)' : '#F8F7FF',
+                        borderColor: active ? ACCENT : isDark ? 'rgba(255,255,255,0.08)' : '#EEE',
+                      },
+                    ]}>
+                    <Ionicons name={m.icon} size={16} color={active ? '#fff' : ACCENT} />
+                    <Text style={[addStyles.methodTxt, { color: active ? '#fff' : colors.textPrimary }]}>{m.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <View style={[addStyles.dateRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F8F7FF' }]}>
+              <Ionicons name="calendar" size={15} color={ACCENT} />
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={[addStyles.dateLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>DATE</Text>
+                <Text style={[addStyles.dateValue, { color: colors.textPrimary }]}>{todayLabel}</Text>
+              </View>
+            </View>
           </ScrollView>
 
-          <Text style={[addStyles.fieldLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>PAYMENT METHOD</Text>
-          <View style={addStyles.methodRow}>
-            {PAYMENT_METHODS.map((m) => {
-              const active = method === m.id;
-              return (
-                <TouchableOpacity
-                  key={m.id}
-                  onPress={() => setMethod(m.id)}
-                  style={[
-                    addStyles.methodBtn,
-                    {
-                      backgroundColor: active ? ACCENT : isDark ? 'rgba(255,255,255,0.05)' : '#F8F7FF',
-                      borderColor: active ? ACCENT : isDark ? 'rgba(255,255,255,0.08)' : '#EEE',
-                    },
-                  ]}>
-                  <Ionicons name={m.icon} size={18} color={active ? '#fff' : ACCENT} />
-                  <Text style={[addStyles.methodTxt, { color: active ? '#fff' : colors.textPrimary }]}>{m.label}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <View style={[addStyles.dateRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F8F7FF' }]}>
-            <Ionicons name="calendar" size={16} color={ACCENT} />
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={[addStyles.dateLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>DATE</Text>
-              <Text style={[addStyles.dateValue, { color: colors.textPrimary }]}>{todayLabel}</Text>
-            </View>
-          </View>
-
-          <View style={addStyles.actions}>
+          <View style={[addStyles.actions, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: isDark ? 'rgba(255,255,255,0.08)' : '#EEE', paddingTop: 12 }]}>
             <TouchableOpacity onPress={onClose} style={[addStyles.actionBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F0EEFF' }]}>
               <Text style={[addStyles.actionTxt, { color: ACCENT }]}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleSave} style={[addStyles.actionBtn, { backgroundColor: ACCENT }]}>
-              <Ionicons name="checkmark" size={18} color="#fff" />
-              <Text style={[addStyles.actionTxt, { color: '#fff', marginLeft: 4 }]}>Save Expense</Text>
+              <Ionicons name="checkmark" size={16} color="#fff" />
+              <Text style={[addStyles.actionTxt, { color: '#fff', marginLeft: 4 }]}>Save</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1300,27 +1345,34 @@ function AddExpenseModal({ visible, onClose, onSave, isDark, colors }) {
 const addStyles = StyleSheet.create({
   bg: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
-  sheet: { borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 22 },
-  handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB', marginBottom: 14 },
-  title: { fontSize: 20, fontWeight: '800', marginBottom: 16 },
-  amountWrap: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, paddingHorizontal: 22, paddingVertical: 18, marginBottom: 18 },
-  amountCurrency: { fontSize: 34, fontWeight: '800', marginRight: 6 },
-  amountInput: { flex: 1, fontSize: 34, fontWeight: '800', padding: 0 },
-  fieldLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 },
-  fieldInputWrap: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 16 },
-  fieldInput: { fontSize: 14, fontWeight: '500', padding: 0 },
-  catRow: { paddingVertical: 4, paddingRight: 12, gap: 8, marginBottom: 16 },
-  catChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 14, marginRight: 8, borderWidth: 1, gap: 6 },
-  catChipTxt: { fontSize: 12, fontWeight: '700' },
-  methodRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  methodBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 12, borderWidth: 1, gap: 4 },
-  methodTxt: { fontSize: 11, fontWeight: '700' },
-  dateRow: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 12, marginBottom: 18 },
-  dateLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1 },
-  dateValue: { fontSize: 13, fontWeight: '700', marginTop: 2 },
-  actions: { flexDirection: 'row', gap: 10 },
-  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14 },
-  actionTxt: { fontSize: 14, fontWeight: '800' },
+  sheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 28 : 16,
+    maxHeight: '88%',
+  },
+  handle: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB', marginBottom: 12 },
+  title: { fontSize: 17, fontWeight: '800', marginBottom: 12 },
+  scrollContent: { paddingBottom: 4 },
+  amountWrap: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 14 },
+  amountCurrency: { fontSize: 28, fontWeight: '800', marginRight: 4 },
+  amountInput: { flex: 1, fontSize: 28, fontWeight: '800', padding: 0 },
+  fieldLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1, marginBottom: 6 },
+  fieldInputWrap: { borderWidth: 1, borderRadius: 11, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12 },
+  fieldInput: { fontSize: 13, fontWeight: '500', padding: 0 },
+  catRow: { paddingVertical: 2, paddingRight: 8, gap: 6, marginBottom: 12 },
+  catChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 12, marginRight: 6, borderWidth: 1, gap: 5 },
+  catChipTxt: { fontSize: 11, fontWeight: '700' },
+  methodRow: { flexDirection: 'row', gap: 7, marginBottom: 12 },
+  methodBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 11, borderWidth: 1, gap: 3 },
+  methodTxt: { fontSize: 10, fontWeight: '700' },
+  dateRow: { flexDirection: 'row', alignItems: 'center', padding: 11, borderRadius: 11, marginBottom: 4 },
+  dateLabel: { fontSize: 9, fontWeight: '700', letterSpacing: 1 },
+  dateValue: { fontSize: 12, fontWeight: '700', marginTop: 2 },
+  actions: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 13 },
+  actionTxt: { fontSize: 13, fontWeight: '800' },
 });
 
 export default function ExpensesScreen() {
@@ -1365,6 +1417,7 @@ export default function ExpensesScreen() {
       )}
       {activeTab === 'AI Advisor' && <AIAdvisorTab expenses={expenses} budgets={budgets} isDark={isDark} colors={colors} />}
 
+      <FAB onPress={() => setAddOpen(true)} />
       <AddExpenseModal visible={addOpen} onClose={() => setAddOpen(false)} onSave={handleAdd} isDark={isDark} colors={colors} />
     </View>
   );

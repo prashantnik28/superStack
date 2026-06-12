@@ -353,7 +353,7 @@ function ZoneEditorModal({ visible, existingZone, onSave, onCancel, colors, isDa
     onSave({ name: zoneName.trim(), locationId, coords: selectedLoc.coords, radius, alertType });
   };
 
-  const bg  = isDark ? '#1A1A2E' : '#FFFFFF';
+  const bg  = isDark ? '#111111' : '#FFFFFF';
   const sec = isDark ? 'rgba(255,255,255,0.06)' : '#F7F4FF';
 
   return (
@@ -468,7 +468,7 @@ function TrackerDetailModal({ visible, tracker, zones, onClose, onFindPress, onS
   if (!tracker) return null;
 
   const zone              = zones[tracker.id];
-  const bg                = isDark ? '#1A1A2E' : '#FFFFFF';
+  const bg                = isDark ? '#111111' : '#FFFFFF';
   const sec               = isDark ? 'rgba(255,255,255,0.06)' : '#F7F4FF';
   const alertTypeLabel    = { enter: 'Enter', leave: 'Leave', both: 'Both' };
 
@@ -688,7 +688,7 @@ export default function TrackingScreen() {
   // ── Tab Bar ─────────────────────────────────────────────────────────────────
 
   const renderTabBar = () => (
-    <View style={[tabs.bar, { backgroundColor: isDark ? '#1A1A2E' : '#fff', borderBottomColor: colors.border }]}>
+    <View style={[tabs.bar, { backgroundColor: isDark ? '#111111' : '#fff', borderBottomColor: colors.border }]}>
       {TABS.map((t, i) => (
         <TouchableOpacity key={t} onPress={() => setActiveTab(i)} style={tabs.tab} activeOpacity={0.75}>
           <Text style={[tabs.tabTxt, { color: i === activeTab ? ACCENT : colors.textSecondary }]}>{t}</Text>
@@ -771,7 +771,7 @@ export default function TrackingScreen() {
 
       {/* Bottom info card when a marker is tapped */}
       {selectedTracker && (
-        <View style={[mp.infoCard, { backgroundColor: isDark ? '#1A1A2E' : '#fff' }]}>
+        <View style={[mp.infoCard, { backgroundColor: isDark ? '#111111' : '#fff' }]}>
           <View style={[mp.infoIcon, { backgroundColor: selectedTracker.color + '22' }]}>
             <Ionicons name={selectedTracker.icon} size={20} color={selectedTracker.color} />
           </View>
@@ -791,7 +791,7 @@ export default function TrackingScreen() {
 
       {/* Legend strip when nothing is selected */}
       {!selectedTracker && (
-        <View style={[mp.legend, { backgroundColor: isDark ? '#1A1A2E' : '#fff' }]}>
+        <View style={[mp.legend, { backgroundColor: isDark ? '#111111' : '#fff' }]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={mp.legendInner}>
             {TRACKERS.map(t => (
               <TouchableOpacity key={t.id} onPress={() => setSelectedTracker(t)} style={mp.legendItem}>

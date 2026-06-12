@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Modal,
   ScrollView, Animated, Dimensions, PanResponder, Platform,
+  DeviceEventEmitter,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { BlurView } from 'expo-blur';
@@ -141,7 +142,18 @@ function BottomNav({ pathname, isDark, colors, insets, onPressCenter }) {
         }
         const active = isActive(tab.route);
         return (
-          <TouchableOpacity key={tab.label} onPress={() => router.push(tab.route)} style={styles.navItem} activeOpacity={0.7}>
+          <TouchableOpacity
+            key={tab.label}
+            onPress={() => {
+              if (active) {
+                DeviceEventEmitter.emit('scrollToTop', tab.route);
+              } else {
+                router.push(tab.route);
+              }
+            }}
+            style={styles.navItem}
+            activeOpacity={0.7}
+          >
             {active && <View style={[styles.navActivePill, { backgroundColor: accentColor + '20' }]} />}
             <Ionicons name={active ? tab.icon : tab.iconOff} size={22} color={active ? accentColor : colors.textSecondary} />
             <Text style={[styles.navLabel, { color: active ? accentColor : colors.textSecondary, fontWeight: active ? '700' : '500' }]}>
@@ -508,7 +520,7 @@ function NotifPanel({ visible, onClose, insets, notifs, onMarkAllRead }) {
           <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
         </Animated.View>
         <Animated.View style={[styles.notifPanel, {
-          backgroundColor: Platform.OS !== 'ios' ? (isDark ? '#0D0D1A' : '#FFFFFF') : 'transparent',
+          backgroundColor: Platform.OS !== 'ios' ? (isDark ? '#000000' : '#FFFFFF') : 'transparent',
           paddingTop: insets.top + 8,
           transform: [{ translateX: slideX }],
         }]}>
@@ -626,12 +638,12 @@ function SettingsDrawer({ visible, onClose }) {
           <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
         </Animated.View>
         <Animated.View style={[styles.drawer, {
-          backgroundColor: isDark ? '#0D0D1A' : '#FFFFFF',
+          backgroundColor: isDark ? '#000000' : '#FFFFFF',
           paddingTop: insets.top + 16,
           width: DRAWER_W,
           transform: [{ translateX: slideX }],
         }]}>
-          <View style={[styles.drawerProfile, { backgroundColor: isDark ? '#1A1A2E' : '#F7F4FF' }]}>
+          <View style={[styles.drawerProfile, { backgroundColor: isDark ? '#111111' : '#F7F4FF' }]}>
             <View style={[styles.drawerAvatar, { backgroundColor: colors.primary }]}>
               <Text style={styles.drawerAvatarTxt}>{(user?.name || 'P').charAt(0)}</Text>
             </View>
@@ -756,7 +768,7 @@ export default function AppLayout() {
   const pageConfig = getPageConfig(pathname, members);
   const isOverviewHome = pageConfig.type === 'home';
 
-  const gradientDark = ['#0D0D1A', '#110B24', '#0A0E20', '#0D0D1A'];
+  const gradientDark = ['#000000', '#0A0A0A', '#050505', '#000000'];
   const gradientLight = ['#F6F7FC', '#F6F7FC', '#F6F7FC', '#F6F7FC'];
 
   const SOSButton = (

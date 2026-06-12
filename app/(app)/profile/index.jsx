@@ -76,7 +76,7 @@ export default function ProfileScreen() {
     <ScrollView style={[styles.scroll]} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
       {/* Hero Card */}
-      <GlassCard style={[styles.heroCard, { backgroundColor: isDark ? '#1A1A2E' : '#6C63FF' }]}>
+      <GlassCard style={[styles.heroCard, { backgroundColor: isDark ? '#111111' : '#6C63FF' }]}>
         <View style={styles.heroInner}>
           <View style={styles.heroAvatar}>
             <Text style={styles.heroAvatarTxt}>P</Text>

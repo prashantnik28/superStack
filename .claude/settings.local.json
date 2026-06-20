@@ -72,7 +72,16 @@
       "Bash(pkill -f \"nest start\")",
       "Bash(pkill -f \"ts-node\")",
       "Bash(echo \"Server PID: $!\")",
-      "Bash(ipconfig getifaddr *)"
+      "Bash(ipconfig getifaddr *)",
+      "Bash(npx expo-doctor *)",
+      "Bash(pkill -f \"node.*smartStackBackend\")",
+      "Bash(lsof -ti:3000)",
+      "Bash(pkill -f \"node.*dist/main\")",
+      "Bash(npx tsc *)",
+      "Bash(npx acorn *)",
+      "Bash(npx babel *)",
+      "Bash(npx --yes @babel/core@7 --presets @babel/preset-react app/\\\\\\(app\\\\\\)/tracking/index.jsx)",
+      "Bash(kill -9 71252)"
     ]
   }
 }

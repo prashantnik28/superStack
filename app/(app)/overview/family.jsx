@@ -1,260 +1,662 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Animated, Easing, Image,
+  Animated, Easing, Image, Modal, TextInput, ActivityIndicator,
+  Alert, KeyboardAvoidingView, Platform, useWindowDimensions, Clipboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../../src/context/ThemeContext';
 import { useFamilyStore } from '../../../src/stores/useFamilyStore';
 import GlassCard from '../../../src/components/ui/GlassCard';
 
-const ACTIVITIES = [
-  { icon: 'school', color: '#6C63FF', title: 'Aarav checked in at school', time: '8:40 AM' },
-  { icon: 'musical-notes', color: '#FF6B9D', title: "Myra's dance class started", time: '10:15 AM' },
-  { icon: 'briefcase', color: '#4CAF82', title: 'Rajan arrived at office', time: '9:45 AM' },
-  { icon: 'shield-checkmark', color: '#26C6DA', title: 'Home security active', time: 'Now' },
-];
+// ─── Add Member Sheet ─────────────────────────────────────────────────────────
 
-export default function FamilyScreen() {
-  const { colors, isDark } = useTheme();
-  const { members } = useFamilyStore();
-  const mountAnim = useRef(new Animated.Value(0)).current;
-  const divColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+function AddMemberSheet({ visible, onClose, colors, isDark }) {
+  const { searchUser, addMember, createFamily, family } = useFamilyStore();
+  const [uid, setUid] = useState('');
+  const [found, setFound] = useState(null);
+  const [searching, setSearching] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [searchErr, setSearchErr] = useState('');
+  const slideAnim = useRef(new Animated.Value(400)).current;
 
   useEffect(() => {
-    Animated.timing(mountAnim, {
-      toValue: 1,
-      duration: 400,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  }, []);
+    if (visible) {
+      setUid(''); setFound(null); setSearchErr('');
+      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 65, friction: 11 }).start();
+    } else {
+      Animated.timing(slideAnim, { toValue: 400, duration: 220, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start();
+    }
+  }, [visible]);
+
+  const handleSearch = async () => {
+    if (!uid.trim()) return;
+    setSearching(true); setFound(null); setSearchErr('');
+    try {
+      setFound(await searchUser(uid.trim()));
+    } catch (err) {
+      setSearchErr(err.response?.data?.message || 'No user found with that ID or username');
+    } finally { setSearching(false); }
+  };
+
+  const handleAdd = async () => {
+    if (!found) return;
+    setAdding(true);
+    try {
+      await addMember(found.uniqueId);
+      onClose();
+    } catch (err) {
+      const status = err.response?.status;
+      const msg = err.response?.data?.message || err.message;
+      if (status === 402) {
+        Alert.alert('Upgrade to Premium', `Free plan allows up to 5 members.\nUpgrade to add up to 7 family members.`, [
+          { text: 'Not Now', style: 'cancel' },
+          { text: 'Upgrade', onPress: onClose },
+        ]);
+      } else if (msg?.toLowerCase().includes('not part of any family')) {
+        Alert.alert('Create Family First', 'You need a family group before adding members.', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Create & Add', onPress: () => Alert.prompt('Family Name', '', async (name) => {
+            if (!name?.trim()) return;
+            setAdding(true);
+            try { await createFamily(name.trim()); await addMember(found.uniqueId); onClose(); }
+            catch (e) { Alert.alert('Error', e.response?.data?.message || e.message); }
+            finally { setAdding(false); }
+          }, 'plain-text', 'My Family') },
+        ]);
+      } else { Alert.alert('Error', msg); }
+    } finally { setAdding(false); }
+  };
+
+  const bg = isDark ? '#0E0E1F' : '#FFFFFF';
+  const inputBg = isDark ? '#1A1A2E' : '#F3F0FF';
+  const borderCol = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(108,99,255,0.12)';
 
   return (
-    <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      <Animated.View style={{
-        opacity: mountAnim,
-        transform: [{ translateY: mountAnim.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }],
-        gap: 12,
-      }}>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+      <KeyboardAvoidingView style={styles.sheetOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
+        <Animated.View style={[styles.sheet, { backgroundColor: bg, transform: [{ translateY: slideAnim }] }]}>
+          <View style={[styles.sheetHandle, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : '#D0D0E8' }]} />
+          <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>Add Family Member</Text>
+          <Text style={[styles.sheetSub, { color: colors.textSecondary }]}>Enter their Unique ID (e.g. SM4K9P2A) or @username</Text>
 
-        {/* ── Family Summary ── */}
-        <GlassCard style={styles.summaryCard}>
-          <View style={styles.summaryTop}>
-            <View>
-              <Text style={[styles.familyLabel, { color: colors.textSecondary }]}>FAMILY</Text>
-              <Text style={[styles.familyName, { color: colors.textPrimary }]}>Singh Family</Text>
-            </View>
-            <TouchableOpacity style={[styles.addBtn, { backgroundColor: colors.primary + '18' }]} activeOpacity={0.8}>
-              <Ionicons name="person-add" size={13} color={colors.primary} />
-              <Text style={[styles.addBtnTxt, { color: colors.primary }]}>Add Member</Text>
+          <View style={[styles.searchRow, { backgroundColor: inputBg, borderColor: borderCol }]}>
+            <TextInput
+              style={[styles.searchInput, { color: colors.textPrimary }]}
+              placeholder="Unique ID or @username"
+              placeholderTextColor={colors.textSecondary}
+              value={uid}
+              onChangeText={(t) => { setUid(t); setFound(null); setSearchErr(''); }}
+              autoCapitalize="none" autoCorrect={false}
+              returnKeyType="search" onSubmitEditing={handleSearch}
+            />
+            <TouchableOpacity style={[styles.searchBtn, { backgroundColor: colors.primary }]} onPress={handleSearch} disabled={searching || !uid.trim()} activeOpacity={0.82}>
+              {searching ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="search" size={16} color="#fff" />}
             </TouchableOpacity>
           </View>
 
-          {/* Stats strip */}
-          <View style={[styles.statStrip, { borderTopColor: divColor }]}>
-            {[
-              { value: `${members.length}`, label: 'Members', color: '#6C63FF' },
-              { value: '1', label: 'At Home', color: '#4CAF82' },
-              { value: `${members.length - 1}`, label: 'Away', color: '#FFB347' },
-              { value: '5/8', label: 'Tasks', color: '#FF6B9D' },
-            ].map((s, i) => (
-              <React.Fragment key={s.label}>
-                {i > 0 && <View style={[styles.stripDiv, { backgroundColor: divColor }]} />}
-                <View style={styles.stripItem}>
-                  <Text style={[styles.stripVal, { color: s.color }]}>{s.value}</Text>
-                  <Text style={[styles.stripLabel, { color: colors.textSecondary }]}>{s.label}</Text>
-                </View>
-              </React.Fragment>
-            ))}
-          </View>
-        </GlassCard>
+          {!!searchErr && <View style={styles.errRow}><Ionicons name="alert-circle" size={14} color="#FF6B6B" /><Text style={styles.errTxt}>{searchErr}</Text></View>}
 
-        {/* ── Members ── */}
-        <Text style={[styles.secLabel, { color: colors.textSecondary }]}>MEMBERS</Text>
-        <GlassCard style={styles.listCard}>
-          {members.map((m, i) => (
-            <View key={m.id}>
-              {i > 0 && <View style={[styles.rowDiv, { backgroundColor: divColor }]} />}
-              <TouchableOpacity
-                style={styles.memberRow}
-                onPress={() => router.push(`/(app)/overview/member/${m.id}`)}
-                activeOpacity={0.72}
-              >
-                <View style={[styles.avatar, { backgroundColor: m.image ? 'transparent' : m.color }]}>
-                  {m.image
-                    ? <Image source={m.image} style={styles.avatarImg} />
-                    : <Text style={styles.avatarTxt}>{m.name.slice(0, 2).toUpperCase()}</Text>
-                  }
-                  <View style={[styles.onlineDot, { borderColor: isDark ? '#000000' : '#fff' }]} />
-                </View>
-
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.memberName, { color: colors.textPrimary }]}>{m.name}</Text>
-                  {m.age != null && (
-                    <Text style={[styles.memberAge, { color: colors.textSecondary }]}>{m.age} years old</Text>
-                  )}
-                </View>
-
-                <View style={[styles.statusChip, { backgroundColor: m.color + '18' }]}>
-                  <View style={[styles.statusDot, { backgroundColor: m.color }]} />
-                  <Text style={[styles.statusTxt, { color: m.color }]}>{m.status}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={13} color={colors.textSecondary} style={{ marginLeft: 4 }} />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </GlassCard>
-
-        {/* ── Today's Activity ── */}
-        <Text style={[styles.secLabel, { color: colors.textSecondary }]}>TODAY'S ACTIVITY</Text>
-        <GlassCard style={styles.listCard}>
-          {ACTIVITIES.map((act, i) => (
-            <View key={i}>
-              {i > 0 && <View style={[styles.rowDiv, { backgroundColor: divColor }]} />}
-              <View style={styles.actRow}>
-                <View style={[styles.actIcon, { backgroundColor: act.color + '18' }]}>
-                  <Ionicons name={act.icon} size={14} color={act.color} />
-                </View>
-                <Text style={[styles.actTitle, { color: colors.textPrimary }]} numberOfLines={1}>{act.title}</Text>
-                <Text style={[styles.actTime, { color: colors.textSecondary }]}>{act.time}</Text>
+          {found && (
+            <View style={[styles.foundCard, { backgroundColor: inputBg, borderColor: colors.primary + '30' }]}>
+              <View style={[styles.foundAvatar, { backgroundColor: colors.primary + '22' }]}>
+                {found.avatar
+                  ? <Image source={{ uri: found.avatar }} style={styles.foundAvatarImg} />
+                  : <Text style={[styles.foundAvatarTxt, { color: colors.primary }]}>{found.name.slice(0, 2).toUpperCase()}</Text>}
               </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.foundName, { color: colors.textPrimary }]}>{found.name}</Text>
+                {found.username ? <Text style={[styles.foundId, { color: colors.textSecondary }]}>@{found.username}</Text> : null}
+                <Text style={[styles.foundId, { color: colors.textSecondary }]}>ID: {found.uniqueId}</Text>
+                {found.alreadyInFamily && <Text style={{ color: '#FF6B6B', fontSize: 11, marginTop: 2 }}>Already in a family</Text>}
+              </View>
+              {!found.alreadyInFamily && (
+                <TouchableOpacity style={[styles.addConfirmBtn, { backgroundColor: colors.primary }]} onPress={handleAdd} disabled={adding} activeOpacity={0.82}>
+                  {adding ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.addConfirmTxt}>Add</Text>}
+                </TouchableOpacity>
+              )}
             </View>
-          ))}
-        </GlassCard>
+          )}
 
-        {/* ── Manage ── */}
-        <Text style={[styles.secLabel, { color: colors.textSecondary }]}>MANAGE</Text>
-        <View style={styles.actionsRow}>
-          {[
-            { icon: 'notifications', color: '#6C63FF', label: 'Alerts', sub: '3 unread' },
-            { icon: 'location', color: '#FF6B9D', label: 'Location', sub: 'Sharing on' },
-            { icon: 'shield-checkmark', color: '#4CAF82', label: 'Safety', sub: 'All clear' },
-            { icon: 'calendar', color: '#FFB347', label: 'Schedule', sub: '2 events' },
-          ].map(a => (
-            <TouchableOpacity key={a.label} style={{ flex: 1 }} activeOpacity={0.8}>
-              <GlassCard style={styles.actionCard}>
-                <View style={[styles.actionIcon, { backgroundColor: a.color + '18' }]}>
-                  <Ionicons name={a.icon} size={15} color={a.color} />
+          {family && (
+            <View style={styles.slotRow}>
+              <Ionicons name={family.needsUpgrade ? 'lock-closed' : 'people'} size={13} color={family.needsUpgrade ? '#FFB347' : colors.textSecondary} />
+              <Text style={[styles.slotTxt, { color: family.needsUpgrade ? '#FFB347' : colors.textSecondary }]}>
+                {family.memberCount}/{family.limit} slots used{family.needsUpgrade ? ' · Upgrade for 2 more' : ''}
+              </Text>
+            </View>
+          )}
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+// ─── Create Family Sheet ──────────────────────────────────────────────────────
+
+function CreateFamilySheet({ visible, onClose, onCreated, colors, isDark }) {
+  const { createFamily } = useFamilyStore();
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const slideAnim = useRef(new Animated.Value(400)).current;
+
+  useEffect(() => {
+    if (visible) {
+      setName('');
+      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 65, friction: 11 }).start();
+    } else {
+      Animated.timing(slideAnim, { toValue: 400, duration: 220, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start();
+    }
+  }, [visible]);
+
+  const handleCreate = async () => {
+    if (!name.trim()) return;
+    setLoading(true);
+    try { await createFamily(name.trim()); onCreated?.(); onClose(); }
+    catch (err) { Alert.alert('Error', err.response?.data?.message || err.message); }
+    finally { setLoading(false); }
+  };
+
+  const bg = isDark ? '#0E0E1F' : '#FFFFFF';
+  const inputBg = isDark ? '#1A1A2E' : '#F3F0FF';
+  const borderCol = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(108,99,255,0.12)';
+
+  return (
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+      <KeyboardAvoidingView style={styles.sheetOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
+        <Animated.View style={[styles.sheet, { backgroundColor: bg, transform: [{ translateY: slideAnim }] }]}>
+          <View style={[styles.sheetHandle, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : '#D0D0E8' }]} />
+          <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>Create Your Family</Text>
+          <Text style={[styles.sheetSub, { color: colors.textSecondary }]}>Give your family a name to get started</Text>
+          <View style={[styles.searchRow, { backgroundColor: inputBg, borderColor: borderCol }]}>
+            <TextInput style={[styles.searchInput, { color: colors.textPrimary }]} placeholder="e.g. Singh Family" placeholderTextColor={colors.textSecondary} value={name} onChangeText={setName} maxLength={50} returnKeyType="done" onSubmitEditing={handleCreate} />
+          </View>
+          <TouchableOpacity style={[styles.createBtn, { backgroundColor: colors.primary, opacity: name.trim() ? 1 : 0.5 }]} onPress={handleCreate} disabled={loading || !name.trim()} activeOpacity={0.82}>
+            {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.createBtnTxt}>Create Family</Text>}
+          </TouchableOpacity>
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+// ─── Join Family Sheet ────────────────────────────────────────────────────────
+
+function JoinFamilySheet({ visible, onClose, colors, isDark }) {
+  const { joinFamily, fetchFamily } = useFamilyStore();
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const slideAnim = useRef(new Animated.Value(400)).current;
+
+  useEffect(() => {
+    if (visible) {
+      setCode(''); setErr('');
+      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 65, friction: 11 }).start();
+    } else {
+      Animated.timing(slideAnim, { toValue: 400, duration: 220, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start();
+    }
+  }, [visible]);
+
+  const handleJoin = async () => {
+    if (!code.trim()) return;
+    setLoading(true); setErr('');
+    try {
+      await joinFamily(code.trim());
+      await fetchFamily();
+      onClose();
+    } catch (e) {
+      setErr(e.response?.data?.message || 'Invalid or expired invite code');
+    } finally { setLoading(false); }
+  };
+
+  const bg = isDark ? '#0E0E1F' : '#FFFFFF';
+  const inputBg = isDark ? '#1A1A2E' : '#F3F0FF';
+  const borderCol = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(108,99,255,0.12)';
+
+  return (
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+      <KeyboardAvoidingView style={styles.sheetOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
+        <Animated.View style={[styles.sheet, { backgroundColor: bg, transform: [{ translateY: slideAnim }] }]}>
+          <View style={[styles.sheetHandle, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : '#D0D0E8' }]} />
+          <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>Join a Family</Text>
+          <Text style={[styles.sheetSub, { color: colors.textSecondary }]}>Enter the 8-character invite code shared by the admin</Text>
+          <View style={[styles.searchRow, { backgroundColor: inputBg, borderColor: err ? '#EF4444' : borderCol }]}>
+            <TextInput
+              style={[styles.searchInput, { color: colors.textPrimary, letterSpacing: 3, fontWeight: '700' }]}
+              placeholder="e.g. ABC12345"
+              placeholderTextColor={colors.textSecondary}
+              value={code}
+              onChangeText={t => { setCode(t.toUpperCase()); setErr(''); }}
+              maxLength={8}
+              autoCapitalize="characters"
+              returnKeyType="done"
+              onSubmitEditing={handleJoin}
+            />
+          </View>
+          {!!err && <Text style={{ color: '#EF4444', fontSize: 12, marginTop: -4 }}>{err}</Text>}
+          <TouchableOpacity
+            style={[styles.createBtn, { backgroundColor: colors.primary, opacity: code.trim().length >= 6 ? 1 : 0.5 }]}
+            onPress={handleJoin}
+            disabled={loading || code.trim().length < 6}
+            activeOpacity={0.82}
+          >
+            {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.createBtnTxt}>Join Family</Text>}
+          </TouchableOpacity>
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+// ─── Member Grid Card ─────────────────────────────────────────────────────────
+
+const MEMBER_GRADIENTS = [
+  ['#6C63FF', '#9C27B0'],
+  ['#FF6B9D', '#FF4081'],
+  ['#4CAF82', '#26C6DA'],
+  ['#FFB347', '#FF6B6B'],
+  ['#3B82F6', '#6C63FF'],
+  ['#9C27B0', '#FF6B9D'],
+  ['#26C6DA', '#4CAF82'],
+];
+
+function MemberCard({ member, index, onPress, colors, isDark }) {
+  const grad = MEMBER_GRADIENTS[index % MEMBER_GRADIENTS.length];
+  const isHome = member.status === 'At Home';
+  const cardBg = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.9)';
+  const cardBorder = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';
+
+  return (
+    <TouchableOpacity style={[styles.memberCard, { backgroundColor: cardBg, borderColor: cardBorder }]} onPress={onPress} activeOpacity={0.75}>
+      <LinearGradient colors={grad} style={styles.memberCardAvatar} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        {member.avatar
+          ? <Image source={{ uri: member.avatar }} style={styles.memberCardAvatarImg} />
+          : <Text style={styles.memberCardInitial}>{member.name[0]}</Text>}
+        <View style={[styles.memberCardDot, { backgroundColor: isHome ? '#4CAF82' : '#FFB347', borderColor: isDark ? '#0E0E1F' : '#fff' }]} />
+      </LinearGradient>
+      <Text style={[styles.memberCardName, { color: colors.textPrimary }]} numberOfLines={1}>{member.name.split(' ')[0]}</Text>
+      <Text style={[styles.memberCardRole, { color: member.role === 'admin' ? '#6C63FF' : colors.textSecondary }]}>
+        {member.role === 'admin' ? 'Admin' : 'Member'}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
+export default function FamilyScreen() {
+  const { colors, isDark } = useTheme();
+  const { family, members, isAdmin, loading, fetchFamily, removeMember } = useFamilyStore();
+  const { width: screenW } = useWindowDimensions();
+  const mountAnim = useRef(new Animated.Value(0)).current;
+  const [showAdd, setShowAdd] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [showJoin, setShowJoin] = useState(false);
+
+  useFocusEffect(useCallback(() => { fetchFamily(); }, []));
+
+  useEffect(() => {
+    Animated.timing(mountAnim, { toValue: 1, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, []);
+
+  const handleRemove = (member) => {
+    Alert.alert('Remove Member', `Remove ${member.name} from your family?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: async () => {
+        try { await removeMember(member.id); }
+        catch (err) { Alert.alert('Error', err.response?.data?.message || err.message); }
+      }},
+    ]);
+  };
+
+  if (!loading && !family) {
+    return (
+      <View style={[styles.emptyWrap, { flex: 1 }]}>
+        <LinearGradient colors={['#6C63FF22', '#FF6B9D11']} style={styles.emptyIconWrap}>
+          <Ionicons name="people" size={36} color={colors.primary} />
+        </LinearGradient>
+        <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No Family Yet</Text>
+        <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Create your family group and start adding members</Text>
+        <TouchableOpacity onPress={() => setShowCreate(true)} activeOpacity={0.82}>
+          <LinearGradient colors={['#6C63FF', '#9C27B0']} style={styles.emptyBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+            <Ionicons name="add" size={16} color="#fff" />
+            <Text style={styles.emptyBtnTxt}>Create Family</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setShowJoin(true)} activeOpacity={0.75} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8 }}>
+          <Ionicons name="key-outline" size={15} color={colors.primary} />
+          <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>Join with Invite Code</Text>
+        </TouchableOpacity>
+        <CreateFamilySheet visible={showCreate} onClose={() => setShowCreate(false)} colors={colors} isDark={isDark} />
+        <JoinFamilySheet visible={showJoin} onClose={() => setShowJoin(false)} colors={colors} isDark={isDark} />
+      </View>
+    );
+  }
+
+  const slotsLeft = (family?.limit ?? 5) - (family?.memberCount ?? members.length);
+  const cardW = (screenW - 28 - 28 - 10) / 3;
+
+  return (
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <Animated.View style={{
+        opacity: mountAnim,
+        transform: [{ translateY: mountAnim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
+        gap: 14,
+      }}>
+
+        {/* ── Hero Card ── */}
+        <LinearGradient
+          colors={isDark ? ['#1A0A3B', '#0D1929', '#0A0A1A'] : ['#6C63FF', '#9C27B0', '#3B82F6']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={styles.heroCard}
+        >
+          {/* Decorative orbs */}
+          <View style={[styles.orb, { top: -30, right: -30, backgroundColor: 'rgba(255,255,255,0.06)' }]} />
+          <View style={[styles.orb, { bottom: -20, left: 40, width: 100, height: 100, backgroundColor: 'rgba(255,107,157,0.10)' }]} />
+
+          <View style={styles.heroTop}>
+            <View>
+              <Text style={styles.heroLabel}>FAMILY GROUP</Text>
+              <Text style={styles.heroName}>{loading ? '...' : (family?.name || 'My Family')}</Text>
+            </View>
+            {family?.plan === 'premium' ? (
+              <View style={styles.premiumBadge}>
+                <Ionicons name="star" size={10} color="#FFB347" />
+                <Text style={styles.premiumTxt}>Premium</Text>
+              </View>
+            ) : (
+              <View style={styles.freeBadge}>
+                <Text style={styles.freeTxt}>Free</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Stats row */}
+          <View style={styles.heroStats}>
+            <View style={styles.heroStat}>
+              <Text style={styles.heroStatVal}>{members.length}</Text>
+              <Text style={styles.heroStatLabel}>Members</Text>
+            </View>
+            <View style={styles.heroStatSep} />
+            <View style={styles.heroStat}>
+              <Text style={styles.heroStatVal}>{family?.limit ?? 5}</Text>
+              <Text style={styles.heroStatLabel}>Limit</Text>
+            </View>
+            <View style={styles.heroStatSep} />
+            <View style={styles.heroStat}>
+              <Text style={styles.heroStatVal}>{members.filter(m => m.status === 'At Home').length}</Text>
+              <Text style={styles.heroStatLabel}>At Home</Text>
+            </View>
+            <View style={styles.heroStatSep} />
+            <TouchableOpacity
+              style={styles.heroStat}
+              activeOpacity={0.7}
+              onPress={() => {
+                if (family?.inviteCode) {
+                  Clipboard.setString(family.inviteCode);
+                  Alert.alert('Copied!', `Invite code ${family.inviteCode} copied to clipboard.`);
+                }
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={styles.heroStatVal}>{family?.inviteCode || '--'}</Text>
+                <Ionicons name="copy-outline" size={11} color="rgba(255,255,255,0.6)" />
+              </View>
+              <Text style={styles.heroStatLabel}>Invite Code · tap to copy</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Slot progress bar */}
+          <View style={styles.progressWrap}>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${Math.min((members.length / (family?.limit ?? 5)) * 100, 100)}%` }]} />
+            </View>
+            <Text style={styles.progressTxt}>{slotsLeft > 0 ? `${slotsLeft} slot${slotsLeft !== 1 ? 's' : ''} available` : 'Family full'}</Text>
+          </View>
+
+          {/* Action buttons */}
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {isAdmin && !family?.atAbsoluteMax && (
+              <TouchableOpacity style={[styles.heroAddBtn, { flex: 1 }]} onPress={() => setShowAdd(true)} activeOpacity={0.8}>
+                <Ionicons name="person-add-outline" size={14} color="#fff" />
+                <Text style={styles.heroAddTxt}>Add Member</Text>
+              </TouchableOpacity>
+            )}
+            {!isAdmin && (
+              <TouchableOpacity style={[styles.heroAddBtn, { flex: 1, backgroundColor: 'rgba(255,255,255,0.15)' }]} onPress={() => setShowJoin(true)} activeOpacity={0.8}>
+                <Ionicons name="key-outline" size={14} color="#fff" />
+                <Text style={styles.heroAddTxt}>Join with Code</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </LinearGradient>
+
+        {/* ── Upgrade Banner ── */}
+        {family?.needsUpgrade && (
+          <LinearGradient colors={['#FF8C00', '#FFB347']} style={styles.upgradeBanner} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+            <Ionicons name="star" size={16} color="#fff" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.upgradeTxt}>Upgrade to Premium</Text>
+              <Text style={styles.upgradeSub}>Add up to 7 members · Unlimited history</Text>
+            </View>
+            <TouchableOpacity style={styles.upgradeBtn} activeOpacity={0.85}>
+              <Text style={styles.upgradeBtnTxt}>Upgrade</Text>
+            </TouchableOpacity>
+          </LinearGradient>
+        )}
+
+        {/* ── Members Grid ── */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Members</Text>
+          <Text style={[styles.sectionCount, { color: colors.textSecondary }]}>{members.length}</Text>
+        </View>
+
+        {loading && members.length === 0 ? (
+          <View style={{ alignItems: 'center', padding: 32 }}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : (
+          <View style={styles.memberGrid}>
+            {members.map((m, i) => (
+              <MemberCard
+                key={m.id}
+                member={m}
+                index={i}
+                onPress={() => router.push(`/(app)/overview/member/${m.id}`)}
+                colors={colors}
+                isDark={isDark}
+              />
+            ))}
+
+            {/* Add slot card */}
+            {isAdmin && slotsLeft > 0 && (
+              <TouchableOpacity style={[styles.addSlotCard, { borderColor: colors.primary + '40', backgroundColor: colors.primary + '08' }]} onPress={() => setShowAdd(true)} activeOpacity={0.75}>
+                <View style={[styles.addSlotIcon, { backgroundColor: colors.primary + '18' }]}>
+                  <Ionicons name="add" size={20} color={colors.primary} />
                 </View>
-                <Text style={[styles.actionLabel, { color: colors.textPrimary }]}>{a.label}</Text>
-                <Text style={[styles.actionSub, { color: colors.textSecondary }]}>{a.sub}</Text>
-              </GlassCard>
+                <Text style={[styles.addSlotTxt, { color: colors.primary }]}>Add</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* ── Quick Actions ── */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Quick Actions</Text>
+        </View>
+        <View style={styles.quickRow}>
+          {[
+            { icon: 'notifications-outline', color: '#6C63FF', label: 'Alerts', sub: '3 unread', grad: ['#6C63FF22', '#9C27B011'] },
+            { icon: 'location-outline',      color: '#FF6B9D', label: 'Location', sub: 'All sharing', grad: ['#FF6B9D22', '#FF408111'] },
+            { icon: 'shield-checkmark-outline', color: '#4CAF82', label: 'Safety', sub: 'All clear', grad: ['#4CAF8222', '#26C6DA11'] },
+            { icon: 'calendar-outline',      color: '#FFB347', label: 'Schedule', sub: '2 events', grad: ['#FFB34722', '#FF6B6B11'] },
+          ].map((a) => (
+            <TouchableOpacity key={a.label} style={{ flex: 1 }} activeOpacity={0.78}>
+              <LinearGradient colors={isDark ? ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.02)'] : a.grad} style={[styles.quickCard, { borderColor: isDark ? 'rgba(255,255,255,0.07)' : a.color + '20' }]}>
+                <View style={[styles.quickIcon, { backgroundColor: a.color + '20' }]}>
+                  <Ionicons name={a.icon} size={16} color={a.color} />
+                </View>
+                <Text style={[styles.quickLabel, { color: colors.textPrimary }]}>{a.label}</Text>
+                <Text style={[styles.quickSub, { color: colors.textSecondary }]}>{a.sub}</Text>
+              </LinearGradient>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* ── Settings ── */}
-        <GlassCard style={styles.listCard}>
+        {/* ── Recent Activity ── */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Activity</Text>
+          <Text style={[styles.sectionLink, { color: colors.primary }]}>See all</Text>
+        </View>
+        <GlassCard style={styles.activityCard}>
           {[
-            { icon: 'notifications', color: '#6C63FF', label: 'Family Notifications', value: 'On' },
-            { icon: 'location', color: '#FF6B9D', label: 'Location Sharing', value: 'Active' },
-            { icon: 'shield-checkmark', color: '#4CAF82', label: 'Safety Settings', value: null },
-          ].map((item, i) => (
-            <View key={item.label}>
-              {i > 0 && <View style={[styles.rowDiv, { backgroundColor: divColor }]} />}
-              <TouchableOpacity style={styles.settingRow} activeOpacity={0.7}>
-                <View style={[styles.settingIcon, { backgroundColor: item.color + '15' }]}>
-                  <Ionicons name={item.icon} size={14} color={item.color} />
-                </View>
-                <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{item.label}</Text>
-                {item.value && (
-                  <Text style={[styles.settingVal, { color: item.color }]}>{item.value}</Text>
-                )}
-                <Ionicons name="chevron-forward" size={13} color={colors.textSecondary} />
-              </TouchableOpacity>
+            { icon: 'school-outline',           color: '#6C63FF', label: 'Family member checked in', time: 'Just now' },
+            { icon: 'shield-checkmark-outline',  color: '#4CAF82', label: 'Home security active',    time: '2m ago' },
+            { icon: 'location-outline',          color: '#FF6B9D', label: 'Location shared',          time: '10m ago' },
+          ].map((act, i, arr) => (
+            <View key={i}>
+              <View style={styles.actRow}>
+                <LinearGradient colors={[act.color + '44', act.color + '11']} style={styles.actIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <Ionicons name={act.icon} size={13} color={act.color} />
+                </LinearGradient>
+                <Text style={[styles.actLabel, { color: colors.textPrimary }]} numberOfLines={1}>{act.label}</Text>
+                <Text style={[styles.actTime, { color: colors.textSecondary }]}>{act.time}</Text>
+              </View>
+              {i < arr.length - 1 && (
+                <View style={[styles.actDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', marginLeft: 50 }]} />
+              )}
             </View>
           ))}
         </GlassCard>
 
         <View style={{ height: 12 }} />
       </Animated.View>
+
+      <AddMemberSheet visible={showAdd} onClose={() => setShowAdd(false)} colors={colors} isDark={isDark} />
+      <CreateFamilySheet visible={showCreate} onClose={() => setShowCreate(false)} colors={colors} isDark={isDark} />
+      <JoinFamilySheet visible={showJoin} onClose={() => setShowJoin(false)} colors={colors} isDark={isDark} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: 'transparent' },
-  content: { padding: 14, paddingBottom: 24 },
+  scroll: { flex: 1 },
+  content: { padding: 14, paddingBottom: 32 },
 
-  secLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.9 },
+  // Empty state
+  emptyWrap: { alignItems: 'center', justifyContent: 'center', padding: 32, gap: 14 },
+  emptyIconWrap: { width: 88, height: 88, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
+  emptyTitle: { fontSize: 22, fontWeight: '800' },
+  emptySub: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
+  emptyBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 26, paddingVertical: 14, borderRadius: 999 },
+  emptyBtnTxt: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
-  // Summary card
-  summaryCard: { padding: 0, overflow: 'hidden' },
-  summaryTop: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', padding: 12,
+  // Hero card
+  heroCard: {
+    borderRadius: 20, padding: 18, gap: 14, overflow: 'hidden',
+    shadowColor: '#6C63FF', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 20, elevation: 10,
   },
-  familyLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.8 },
-  familyName: { fontSize: 15, fontWeight: '800', marginTop: 1 },
-  addBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999,
-  },
-  addBtnTxt: { fontSize: 12, fontWeight: '600' },
+  orb: { position: 'absolute', width: 140, height: 140, borderRadius: 70 },
+  heroTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  heroLabel: { fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.55)', letterSpacing: 1.2 },
+  heroName: { fontSize: 22, fontWeight: '900', color: '#fff', marginTop: 2, letterSpacing: -0.3 },
+  premiumBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,179,71,0.2)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,179,71,0.35)' },
+  premiumTxt: { fontSize: 11, fontWeight: '700', color: '#FFB347' },
+  freeBadge: { backgroundColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
+  freeTxt: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.7)' },
 
-  statStrip: { flexDirection: 'row', borderTopWidth: 0.5 },
-  stripItem: { flex: 1, alignItems: 'center', paddingVertical: 10 },
-  stripDiv: { width: 0.5 },
-  stripVal: { fontSize: 15, fontWeight: '800' },
-  stripLabel: { fontSize: 10, fontWeight: '500', marginTop: 1 },
+  heroStats: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: 12, paddingVertical: 10 },
+  heroStat: { flex: 1, alignItems: 'center', gap: 2 },
+  heroStatVal: { fontSize: 15, fontWeight: '800', color: '#fff' },
+  heroStatLabel: { fontSize: 9, color: 'rgba(255,255,255,0.55)', fontWeight: '600', letterSpacing: 0.3 },
+  heroStatSep: { width: 1, height: 28, backgroundColor: 'rgba(255,255,255,0.12)' },
 
-  // Generic grouped list card
-  listCard: { padding: 0, overflow: 'hidden' },
-  rowDiv: { height: 0.5, marginHorizontal: 12 },
+  progressWrap: { gap: 6 },
+  progressTrack: { height: 4, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 99, overflow: 'hidden' },
+  progressFill: { height: 4, backgroundColor: 'rgba(255,255,255,0.75)', borderRadius: 99 },
+  progressTxt: { fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: '600' },
 
-  // Member rows
-  memberRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 12, paddingVertical: 10, gap: 10,
+  heroAddBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12,
+    paddingVertical: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
   },
-  avatar: {
-    width: 38, height: 38, borderRadius: 19,
-    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
-  },
-  avatarImg: { width: 38, height: 38, borderRadius: 19 },
-  avatarTxt: { color: '#fff', fontWeight: '700', fontSize: 11 },
-  onlineDot: {
-    position: 'absolute', bottom: 0, right: 0,
-    width: 10, height: 10, borderRadius: 5,
-    backgroundColor: '#4CAF82', borderWidth: 2,
-  },
-  memberName: { fontSize: 13, fontWeight: '600' },
-  memberAge: { fontSize: 11, marginTop: 1 },
-  statusChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999,
-  },
-  statusDot: { width: 5, height: 5, borderRadius: 2.5 },
-  statusTxt: { fontSize: 11, fontWeight: '600' },
+  heroAddTxt: { color: '#fff', fontSize: 13, fontWeight: '700' },
 
-  // Activity rows
-  actRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 12, paddingVertical: 10, gap: 10,
-  },
-  actIcon: { width: 28, height: 28, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
-  actTitle: { flex: 1, fontSize: 12, fontWeight: '500' },
-  actTime: { fontSize: 10, fontWeight: '500' },
+  // Upgrade banner
+  upgradeBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 16 },
+  upgradeTxt: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  upgradeSub: { color: 'rgba(255,255,255,0.8)', fontSize: 11, marginTop: 1 },
+  upgradeBtn: { backgroundColor: 'rgba(255,255,255,0.25)', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999 },
+  upgradeBtnTxt: { color: '#fff', fontSize: 12, fontWeight: '700' },
 
-  // Manage action grid
-  actionsRow: { flexDirection: 'row', gap: 8 },
-  actionCard: { padding: 10, alignItems: 'flex-start', gap: 3 },
-  actionIcon: { width: 28, height: 28, borderRadius: 7, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
-  actionLabel: { fontSize: 11, fontWeight: '700' },
-  actionSub: { fontSize: 10 },
+  // Section headers
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2 },
+  sectionTitle: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+  sectionCount: { fontSize: 13, fontWeight: '600' },
+  sectionLink: { fontSize: 13, fontWeight: '600' },
 
-  // Settings rows
-  settingRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 12, paddingVertical: 11, gap: 10,
+  // Member grid
+  memberGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  memberCard: {
+    width: '22%', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center', gap: 5,
+    borderWidth: 1,
   },
-  settingIcon: { width: 28, height: 28, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
-  settingLabel: { flex: 1, fontSize: 13, fontWeight: '500' },
-  settingVal: { fontSize: 12, fontWeight: '600', marginRight: 2 },
+  memberCardAvatar: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  memberCardAvatarImg: { width: 38, height: 38, borderRadius: 12 },
+  memberCardInitial: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  memberCardDot: { position: 'absolute', bottom: -2, right: -2, width: 9, height: 9, borderRadius: 5, borderWidth: 1.5 },
+  memberCardName: { fontSize: 11, fontWeight: '700', textAlign: 'center' },
+  memberCardRole: { fontSize: 9, fontWeight: '600' },
+
+  // Add slot card
+  addSlotCard: { width: '22%', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center', gap: 5, borderWidth: 1.5, borderStyle: 'dashed' },
+  addSlotIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  addSlotTxt: { fontSize: 11, fontWeight: '700' },
+
+  // Quick actions
+  quickRow: { flexDirection: 'row', gap: 8 },
+  quickCard: { borderRadius: 14, padding: 10, gap: 4, borderWidth: 1 },
+  quickIcon: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
+  quickLabel: { fontSize: 11, fontWeight: '700' },
+  quickSub: { fontSize: 10 },
+
+  // Activity
+  activityCard: { padding: 0, overflow: 'hidden' },
+  actRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12, gap: 12 },
+  actIcon: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  actLabel: { flex: 1, fontSize: 13, fontWeight: '500' },
+  actTime: { fontSize: 11 },
+  actDivider: { height: 0.5, marginRight: 14 },
+
+  // Bottom sheets
+  sheetOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
+  sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: 42, gap: 14 },
+  sheetHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 4 },
+  sheetTitle: { fontSize: 18, fontWeight: '800' },
+  sheetSub: { fontSize: 13, lineHeight: 18, marginTop: -8 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
+  searchInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, fontWeight: '600' },
+  searchBtn: { paddingHorizontal: 16, paddingVertical: 13, alignItems: 'center', justifyContent: 'center' },
+  errRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: -6 },
+  errTxt: { color: '#FF6B6B', fontSize: 13 },
+  foundCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 14, borderWidth: 1 },
+  foundAvatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  foundAvatarImg: { width: 44, height: 44, borderRadius: 22 },
+  foundAvatarTxt: { fontSize: 14, fontWeight: '800' },
+  foundName: { fontSize: 14, fontWeight: '700' },
+  foundId: { fontSize: 11, marginTop: 2 },
+  addConfirmBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999 },
+  addConfirmTxt: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  slotRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: -6 },
+  slotTxt: { fontSize: 12, fontWeight: '500' },
+  createBtn: { borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
+  createBtnTxt: { color: '#fff', fontSize: 15, fontWeight: '700' },
 });

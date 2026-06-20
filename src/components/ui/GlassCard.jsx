@@ -4,12 +4,12 @@ import { BlurView } from 'expo-blur';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function GlassCard({ children, style, intensity }) {
-  const { isDark } = useTheme();
+  const { isDark, radius } = useTheme();
 
   if (!isDark) {
     return (
-      <View style={styles.lightShadow}>
-        <View style={[styles.inner, styles.lightInner, style]}>
+      <View style={[styles.lightShadow, { borderRadius: radius }]}>
+        <View style={[styles.inner, { borderRadius: radius }, style]}>
           {children}
         </View>
       </View>
@@ -18,8 +18,8 @@ export default function GlassCard({ children, style, intensity }) {
 
   const blur = intensity ?? 30;
   return (
-    <View style={styles.darkShadow}>
-      <View style={[styles.inner, styles.darkInner, style]}>
+    <View style={[styles.darkShadow, { borderRadius: radius }]}>
+      <View style={[styles.inner, styles.darkInner, { borderRadius: radius }, style]}>
         {Platform.OS === 'ios' && (
           <>
             <BlurView intensity={blur} tint="dark" style={StyleSheet.absoluteFill} />
@@ -32,19 +32,16 @@ export default function GlassCard({ children, style, intensity }) {
   );
 }
 
-const RADIUS = 14;
-
 const styles = StyleSheet.create({
   lightShadow: {
-    borderRadius: RADIUS,
     shadowColor: '#4A5B8A',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.22,
     shadowRadius: 18,
     elevation: 10,
+    backgroundColor: '#FFFFFF',
   },
   darkShadow: {
-    borderRadius: RADIUS,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.55,
@@ -52,11 +49,7 @@ const styles = StyleSheet.create({
     elevation: 14,
   },
   inner: {
-    borderRadius: RADIUS,
     overflow: 'hidden',
-  },
-  lightInner: {
-    backgroundColor: '#FFFFFF',
   },
   darkInner: {
     borderWidth: 0.6,

@@ -54,10 +54,35 @@ export const useExpensesStore = create((set, get) => ({
   goals:        [],
   loading:      false,
   error:        null,
-  selectedMonth: new Date().getMonth(),
-  selectedYear:  new Date().getFullYear(),
-  currency:     'INR',
-  setCurrency:  (c) => set({ currency: c }),
+  selectedMonth:    new Date().getMonth(),
+  selectedYear:     new Date().getFullYear(),
+  currency:         'INR',
+  setCurrency: async (c) => {
+    set({ currency: c });
+    try { await api.patch('/users/me', { currency: c }); } catch {}
+  },
+  hydrateCurrency: (c) => set({ currency: c || 'INR' }),
+  fetchUserPreferences: async () => {
+    try {
+      const { data } = await api.get('/users/me');
+      if (data.data?.currency) set({ currency: data.data.currency });
+    } catch {}
+  },
+  monthlyBudgetCap: 0,  // 0 = not set; user-defined total monthly ceiling
+  setMonthlyBudgetCap: async (v) => {
+    const value = Math.max(0, v);
+    set({ monthlyBudgetCap: value });
+    const { selectedMonth, selectedYear } = get();
+    try {
+      await api.put('/expenses/budgets/__cap__', {
+        limit: value,
+        month: selectedMonth + 1,
+        year:  selectedYear,
+      });
+    } catch {
+      get().fetchBudgets(get().selectedMonth, get().selectedYear);
+    }
+  },
 
   setMonth: (month, year) => {
     set({ selectedMonth: month, selectedYear: year });
@@ -131,8 +156,12 @@ export const useExpensesStore = create((set, get) => ({
         params: { month: month + 1, year },
       });
       const map = { ...DEFAULT_BUDGETS };
-      (data.data || []).forEach((b) => { map[b.category] = b.limit; });
-      set({ budgets: map });
+      let cap = 0;
+      (data.data || []).forEach((b) => {
+        if (b.category === '__cap__') { cap = b.limit; }
+        else { map[b.category] = b.limit; }
+      });
+      set({ budgets: map, monthlyBudgetCap: cap });
     } catch {
       // keep defaults on error
     }

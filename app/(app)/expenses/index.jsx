@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  TextInput, Modal, Alert, KeyboardAvoidingView, Platform,
-  ActivityIndicator, Animated, Easing, Dimensions,
+  TextInput, Modal, Alert, Keyboard, PanResponder, Platform,
+  ActivityIndicator, Animated, Easing, Dimensions, KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgGradient, Stop, Line as SvgLine, Text as SvgText } from 'react-native-svg';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../../src/context/ThemeContext';
 import { useExpensesStore } from '../../../src/stores/useExpensesStore';
 import GlassCard from '../../../src/components/ui/GlassCard';
@@ -14,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
 const ACCENT   = '#6C63FF';
-const { width: SCREEN_W } = Dimensions.get('window');
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
 const CATEGORIES = [
   { id: 'food',          label: 'Food & Dining',    icon: 'restaurant',          color: '#FF6B6B' },
@@ -1304,12 +1305,14 @@ const MP = StyleSheet.create({
 
 // ── Budget Tab ────────────────────────────────────────────────────────────────
 
-function BudgetTab({ transactions, budgets, onUpdateBudget, month, year, onChangeMonth, isDark, colors }) {
+function BudgetTab({ transactions, budgets, monthlyBudgetCap, onSetBudgetCap, onUpdateBudget, month, year, onChangeMonth, isDark, colors }) {
   const currency = useExpensesStore((s) => s.currency);
   const fmt      = (n) => formatCurrency(n, currency);
   const currSym  = currency === 'USD' ? '$' : '₹';
   const { radius } = useTheme();
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const [editCapOpen,     setEditCapOpen]     = useState(false);
+  const [capInput,        setCapInput]        = useState('');
 
   const byCategory = useMemo(() => {
     const map = {};
@@ -1320,6 +1323,9 @@ function BudgetTab({ transactions, budgets, onUpdateBudget, month, year, onChang
 
   const totalSpent  = useMemo(() => Object.values(byCategory).reduce((s, v) => s + v, 0), [byCategory]);
   const totalBudget = useMemo(() => Object.values(budgets).reduce((s, v) => s + v, 0), [budgets]);
+  const cap         = monthlyBudgetCap || 0;
+  const unallocated = cap > 0 ? Math.max(0, cap - totalBudget) : 0;
+  const overAllocated = cap > 0 && totalBudget > cap;
 
   const [editVals, setEditVals] = useState(() => {
     const v = {};
@@ -1341,6 +1347,16 @@ function BudgetTab({ transactions, budgets, onUpdateBudget, month, year, onChang
     const v   = parseInt(editVals[catId], 10);
     const cur = budgets[catId] || 0;
     if (isNaN(v) || v < 0 || v === cur) return;
+    // enforce cap: sum of all categories (with this new value) must not exceed cap
+    if (cap > 0) {
+      const otherSum = Object.entries(budgets).reduce((s, [k, b]) => k === catId ? s : s + (b || 0), 0);
+      if (otherSum + v > cap) {
+        const allowed = Math.max(0, cap - otherSum);
+        Alert.alert('Over budget cap', `This category can get at most ${currSym}${allowed.toLocaleString()} to stay within your ${fmt(cap)} monthly budget.`);
+        setEditVals((prev) => ({ ...prev, [catId]: String(cur) }));
+        return;
+      }
+    }
     setSavingCat(catId);
     try {
       await onUpdateBudget(catId, v);
@@ -1350,33 +1366,53 @@ function BudgetTab({ transactions, budgets, onUpdateBudget, month, year, onChang
       setEditVals((prev) => ({ ...prev, [catId]: String(cur) }));
     }
     setSavingCat(null);
-  }, [editVals, budgets, onUpdateBudget]);
+  }, [editVals, budgets, cap, currSym, onUpdateBudget]);
 
   const expCats  = CATEGORIES.filter((c) => ['food','transport','shopping','entertainment','health','education','bills','others'].includes(c.id));
   const onTrack  = expCats.filter((c) => (byCategory[c.id] || 0) <= (budgets[c.id] || 0)).length;
   const totalPct = totalBudget > 0 ? totalSpent / totalBudget : 0;
   const barColor = (pct) => pct > 85 ? '#FF6B6B' : pct > 60 ? '#FFB347' : '#4CAF82';
 
+  const handleSaveCap = useCallback(() => {
+    const v = parseInt(capInput, 10);
+    if (!isNaN(v) && v >= 0) {
+      onSetBudgetCap(v);
+      setEditCapOpen(false);
+    }
+  }, [capInput, onSetBudgetCap]);
+
   return (
     <>
     <ScrollView style={{ flex: 1, backgroundColor: isDark ? 'transparent' : '#F2F1F8' }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
 
+      {/* ── Hero card ── */}
       <LinearGradient colors={['#7B6CFF', '#3D2F9E']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[BG.hero, { borderRadius: radius + 4 }]}>
-        {/* Calendar month picker button */}
-        <TouchableOpacity
-          onPress={() => setMonthPickerOpen(true)}
-          style={{ position: 'absolute', top: 16, right: 16, width: 34, height: 34, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="calendar-outline" size={17} color="#fff" />
-        </TouchableOpacity>
-
-        <View style={{ marginBottom: 2 }}>
-          <Text style={BG.heroLabel}>MONTHLY BUDGET OVERVIEW</Text>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.55)', marginTop: 1 }}>
-            {MONTHS_FULL[month]} {year}
-          </Text>
+        {/* Header row: label + month/year + action buttons */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={BG.heroLabel}>MONTHLY BUDGET OVERVIEW</Text>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
+              {MONTHS_FULL[month]} {year}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => { setCapInput(cap > 0 ? String(cap) : ''); setEditCapOpen(true); }}
+            style={BG.heroBtn}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="pencil-outline" size={15} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setMonthPickerOpen(true)}
+            style={[BG.heroBtn, { marginLeft: 8 }]}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="calendar-outline" size={15} color="#fff" />
+          </TouchableOpacity>
         </View>
+
         <View style={BG.heroAmtRow}>
           <Text style={BG.heroSpent}>{fmt(totalSpent)}</Text>
           <Text style={BG.heroBudgetOf}> / {fmt(totalBudget)}</Text>
@@ -1405,6 +1441,98 @@ function BudgetTab({ transactions, budgets, onUpdateBudget, month, year, onChang
           ))}
         </View>
       </LinearGradient>
+
+      {/* ── Budget Allocation card ── */}
+      <View style={[BG.cardWrap, { marginTop: 14 }]}>
+        <GlassCard style={[BG.card, { borderRadius: radius, padding: 16 }]}>
+          {/* Card header */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <View style={[BG.iconWrap, { backgroundColor: isDark ? 'rgba(108,99,255,0.18)' : '#EEEDFF' }]}>
+              <Ionicons name="wallet-outline" size={15} color={ACCENT} />
+            </View>
+            <Text style={[{ flex: 1, fontSize: 13, fontWeight: '800', marginLeft: 10, color: colors.textPrimary }]}>Budget Allocation</Text>
+            {cap === 0 && (
+              <TouchableOpacity
+                onPress={() => { setCapInput(''); setEditCapOpen(true); }}
+                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: ACCENT + '18', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="add" size={13} color={ACCENT} />
+                <Text style={{ fontSize: 11, fontWeight: '700', color: ACCENT, marginLeft: 3 }}>Set Budget</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {cap === 0 ? (
+            <View style={{ alignItems: 'center', paddingVertical: 18 }}>
+              <Ionicons name="wallet-outline" size={36} color={isDark ? '#374151' : '#D1D5DB'} />
+              <Text style={{ fontSize: 13, fontWeight: '600', color: isDark ? '#6B7280' : '#9CA3AF', marginTop: 8, textAlign: 'center' }}>
+                Set a monthly budget cap to control{'\n'}how much you allocate per category.
+              </Text>
+            </View>
+          ) : (
+            <>
+              {/* Total cap vs allocated */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>Monthly Cap</Text>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: colors.textPrimary }}>{fmt(cap)}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>Allocated</Text>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: overAllocated ? '#FF6B6B' : colors.textPrimary }}>{fmt(totalBudget)}</Text>
+              </View>
+
+              {/* Allocation progress bar */}
+              <View style={[BG.barTrack, { height: 8, borderRadius: 4, marginBottom: 10, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : '#EAEBF2' }]}>
+                <LinearGradient
+                  colors={overAllocated ? ['#FF8A8A','#FF6B6B'] : totalBudget / cap > 0.9 ? ['#FFD068','#FFB347'] : ['#818CF8','#6C63FF']}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                  style={[BG.barFill, { width: `${Math.min(100, (totalBudget / cap) * 100)}%` }]}
+                />
+              </View>
+
+              {overAllocated ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FF6B6B18', borderRadius: 8, padding: 10, marginBottom: 2 }}>
+                  <Ionicons name="warning-outline" size={14} color="#FF6B6B" />
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#FF6B6B', marginLeft: 6 }}>
+                    Over-allocated by {fmt(totalBudget - cap)}
+                  </Text>
+                </View>
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280' }}>
+                    {fmt(unallocated)} still unallocated
+                  </Text>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: unallocated === 0 ? '#4CAF82' : ACCENT }}>
+                    {Math.round((totalBudget / cap) * 100)}% allocated
+                  </Text>
+                </View>
+              )}
+
+              {/* Per-category mini bars */}
+              <View style={[BG.divider, { marginVertical: 12 }]} />
+              {expCats.map((c) => {
+                const allocated = budgets[c.id] || 0;
+                const pctOfCap  = cap > 0 ? (allocated / cap) * 100 : 0;
+                if (allocated === 0) return null;
+                return (
+                  <View key={c.id} style={{ marginBottom: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
+                      <Ionicons name={c.icon} size={11} color={isDark ? '#9CA3AF' : '#6B7280'} />
+                      <Text style={{ flex: 1, fontSize: 11, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', marginLeft: 5 }}>{c.label}</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textPrimary }}>{fmt(allocated)}</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '600', color: isDark ? '#4B5563' : '#9CA3AF', marginLeft: 4 }}>({pctOfCap.toFixed(0)}%)</Text>
+                    </View>
+                    <View style={{ height: 3, borderRadius: 2, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : '#EAEBF2' }}>
+                      <View style={{ width: `${Math.min(100, pctOfCap)}%`, height: '100%', borderRadius: 2, backgroundColor: ACCENT + 'AA' }} />
+                    </View>
+                  </View>
+                );
+              })}
+            </>
+          )}
+        </GlassCard>
+      </View>
 
       <Text style={{ fontSize: 11, fontWeight: '700', letterSpacing: 1, color: isDark ? '#9CA3AF' : '#6B7280', marginLeft: 20, marginTop: 18, marginBottom: 2 }}>
         CATEGORY BUDGETS · TAP AMOUNT TO EDIT
@@ -1484,6 +1612,40 @@ function BudgetTab({ transactions, budgets, onUpdateBudget, month, year, onChang
       })}
     </ScrollView>
 
+    {/* ── Set Monthly Budget Cap sheet ── */}
+    <Modal visible={editCapOpen} transparent animationType="fade" onRequestClose={() => setEditCapOpen(false)}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.55)', paddingHorizontal: 24 }}>
+        <View style={{ width: '100%', backgroundColor: isDark ? '#1B1730' : '#fff', borderRadius: radius + 8, padding: 24 }}>
+          <Text style={{ fontSize: 17, fontWeight: '800', color: colors.textPrimary, marginBottom: 4 }}>Monthly Budget Cap</Text>
+          <Text style={{ fontSize: 12, fontWeight: '600', color: isDark ? '#9CA3AF' : '#6B7280', marginBottom: 18 }}>
+            Set the total you plan to spend this month. Category allocations won't be allowed to exceed this.
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F4F3FA', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20 }}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: isDark ? '#9CA3AF' : '#6B7280', marginRight: 4 }}>{currSym}</Text>
+            <TextInput
+              value={capInput}
+              onChangeText={setCapInput}
+              keyboardType="number-pad"
+              returnKeyType="done"
+              onSubmitEditing={handleSaveCap}
+              autoFocus
+              placeholder="e.g. 50000"
+              placeholderTextColor={isDark ? '#374151' : '#D1D5DB'}
+              style={{ flex: 1, fontSize: 20, fontWeight: '800', color: colors.textPrimary, padding: 0 }}
+            />
+          </View>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <TouchableOpacity onPress={() => setEditCapOpen(false)} style={{ flex: 1, paddingVertical: 13, borderRadius: 10, alignItems: 'center', backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F4F3FA' }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: isDark ? '#9CA3AF' : '#6B7280' }}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleSaveCap} style={{ flex: 2, paddingVertical: 13, borderRadius: 10, alignItems: 'center', backgroundColor: ACCENT }}>
+              <Text style={{ fontSize: 14, fontWeight: '800', color: '#fff' }}>Save Cap</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+
     <MonthPickerSheet
       visible={monthPickerOpen}
       month={month ?? new Date().getMonth()}
@@ -1499,7 +1661,8 @@ function BudgetTab({ transactions, budgets, onUpdateBudget, month, year, onChang
 
 const BG = StyleSheet.create({
   hero:         { marginHorizontal: 16, marginTop: 16, padding: 20 },
-  heroLabel:    { fontSize: 10, fontWeight: '800', letterSpacing: 1, color: 'rgba(255,255,255,0.65)', marginBottom: 8 },
+  heroLabel:    { fontSize: 10, fontWeight: '800', letterSpacing: 1, color: 'rgba(255,255,255,0.65)' },
+  heroBtn:      { width: 32, height: 32, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
   heroAmtRow:   { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 16 },
   heroSpent:    { fontSize: 30, fontWeight: '800', color: '#fff' },
   heroBudgetOf: { fontSize: 16, fontWeight: '600', color: 'rgba(255,255,255,0.65)', marginBottom: 3 },
@@ -1766,8 +1929,67 @@ function AddExpenseSheet({ visible, onClose, onSave, isDark, colors }) {
   const { radius } = useTheme();
   const currency    = useExpensesStore((s) => s.currency);
   const currSym     = currency === 'USD' ? '$' : '₹';
-  const slideAnim   = useRef(new Animated.Value(650)).current;
-  const backdropAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim    = useRef(new Animated.Value(SCREEN_H)).current;  // native driver — translateY slide in/out
+  const backdropAnim = useRef(new Animated.Value(0)).current;          // native driver — backdrop opacity
+
+  const DEFAULT_H  = SCREEN_H * 0.80;
+  const MAX_H      = SCREEN_H * 0.94;
+  const MIN_H      = SCREEN_H * 0.40;
+  // JS driver values (height/bottom can't use native driver)
+  const sheetHAnim = useRef(new Animated.Value(DEFAULT_H)).current;   // JS driver — sheet height
+  const kbLiftAnim = useRef(new Animated.Value(0)).current;            // JS driver — bottom offset above keyboard
+  const sheetHRef  = useRef(DEFAULT_H);
+  const kbRef      = useRef(0);
+
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        const kb = e.endCoordinates.height;
+        kbRef.current = kb;
+        const dur = e.duration || 250;
+        // lift sheet above keyboard + shrink height to fill space above keyboard
+        const newH = Math.min(sheetHRef.current, SCREEN_H - kb - 44);
+        sheetHRef.current = newH;
+        Animated.parallel([
+          Animated.timing(kbLiftAnim, { toValue: kb,   duration: dur, useNativeDriver: false }),
+          Animated.timing(sheetHAnim, { toValue: newH, duration: dur, useNativeDriver: false }),
+        ]).start();
+      }
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      (e) => {
+        kbRef.current = 0;
+        const dur = e.duration || 250;
+        const newH = Math.min(MAX_H, Math.max(DEFAULT_H, sheetHRef.current));
+        sheetHRef.current = newH;
+        Animated.parallel([
+          Animated.timing(kbLiftAnim, { toValue: 0,    duration: dur, useNativeDriver: false }),
+          Animated.timing(sheetHAnim, { toValue: newH, duration: dur, useNativeDriver: false }),
+        ]).start();
+      }
+    );
+    return () => { show.remove(); hide.remove(); };
+  }, []);
+
+  // PanResponder: drag up = taller, drag down = shorter / close
+  const panResponder = useRef(PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, { dy }) => Math.abs(dy) > 4,
+    onPanResponderMove: (_, { dy }) => {
+      const cap = kbRef.current > 0 ? SCREEN_H - kbRef.current - 44 : MAX_H;
+      const next = Math.min(cap, Math.max(MIN_H, sheetHRef.current - dy));
+      sheetHAnim.setValue(next);
+    },
+    onPanResponderRelease: (_, { dy, vy }) => {
+      if (vy > 0.8 || dy > 100) return handleClose();
+      const cap = kbRef.current > 0 ? SCREEN_H - kbRef.current - 44 : MAX_H;
+      const target = Math.min(cap, Math.max(MIN_H, sheetHRef.current - dy));
+      sheetHRef.current = target;
+      Animated.spring(sheetHAnim, { toValue: target, bounciness: 4, useNativeDriver: false }).start();
+    },
+  })).current;
 
   // Form state
   const [amount,    setAmount]    = useState('');
@@ -1785,23 +2007,29 @@ function AddExpenseSheet({ visible, onClose, onSave, isDark, colors }) {
   // Animate open/close
   useEffect(() => {
     if (visible) {
-      slideAnim.setValue(650);
+      slideAnim.setValue(SCREEN_H);
       backdropAnim.setValue(0);
+      sheetHAnim.setValue(DEFAULT_H);
+      kbLiftAnim.setValue(0);
+      sheetHRef.current = DEFAULT_H;
+      kbRef.current = 0;
       setAmount(''); setDesc(''); setType('expense'); setCategory('food');
       setMethod('upi'); setRecurring(false); setNotes('');
       const n = new Date();
       setSelDate({ year: n.getFullYear(), month: n.getMonth(), date: n.getDate() });
       Animated.parallel([
-        Animated.spring(slideAnim, { toValue: 0, tension: 60, friction: 12, useNativeDriver: true }),
+        Animated.spring(slideAnim, { toValue: 0, tension: 65, friction: 12, useNativeDriver: true }),
         Animated.timing(backdropAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
       ]).start();
     }
   }, [visible]);
 
   const handleClose = useCallback(() => {
+    Keyboard.dismiss();
     Animated.parallel([
-      Animated.timing(slideAnim, { toValue: 650, duration: 260, useNativeDriver: true }),
-      Animated.timing(backdropAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+      Animated.timing(slideAnim,    { toValue: SCREEN_H, duration: 260, useNativeDriver: true  }),
+      Animated.timing(backdropAnim, { toValue: 0,        duration: 200, useNativeDriver: true  }),
+      Animated.timing(kbLiftAnim,   { toValue: 0,        duration: 200, useNativeDriver: false }),
     ]).start(onClose);
   }, [onClose]);
 
@@ -1830,22 +2058,25 @@ function AddExpenseSheet({ visible, onClose, onSave, isDark, colors }) {
         <TouchableOpacity activeOpacity={1} onPress={handleClose} style={StyleSheet.absoluteFillObject} />
       </Animated.View>
 
-      {/* ── Sliding sheet ── */}
-      <KeyboardAvoidingView
-        style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        pointerEvents="box-none"
-      >
+      {/* ── Sliding sheet ──
+           Layer 1 (JS driver):   bottom: kbLiftAnim  — lifts sheet above keyboard
+           Layer 2 (native driver): translateY: slideAnim — slide in/out animation
+           Layer 3 (JS driver):   height: sheetHAnim  — resize for keyboard + drag ── */}
+        <Animated.View style={{ position: 'absolute', bottom: kbLiftAnim, left: 0, right: 0 }}>
+        <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
         <Animated.View
           style={[AS.sheet, {
+            height: sheetHAnim,
             backgroundColor: isDark ? '#16132A' : '#FFFFFF',
             borderTopLeftRadius: radius + 8,
             borderTopRightRadius: radius + 8,
-            transform: [{ translateY: slideAnim }],
+            overflow: 'hidden',
           }]}
         >
-          {/* Handle + header */}
-          <View style={AS.handle} />
+          {/* Drag handle */}
+          <View style={AS.handleWrap} {...panResponder.panHandlers}>
+            <View style={AS.handle} />
+          </View>
           <View style={AS.headerRow}>
             <View style={{ flex: 1 }}>
               <Text style={[AS.title, { color: colors.textPrimary }]}>New Transaction</Text>
@@ -1867,7 +2098,7 @@ function AddExpenseSheet({ visible, onClose, onSave, isDark, colors }) {
             ))}
           </View>
 
-          <ScrollView style={{ maxHeight: 460 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 8 }}>
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 8 }}>
 
             {/* Amount */}
             <View style={[AS.amountBox, { backgroundColor: accentColor + '18', borderColor: accentColor + '44', borderWidth: 1 }]}>
@@ -1961,7 +2192,8 @@ function AddExpenseSheet({ visible, onClose, onSave, isDark, colors }) {
             </TouchableOpacity>
           </View>
         </Animated.View>
-      </KeyboardAvoidingView>
+        </Animated.View>
+        </Animated.View>
 
       <DatePickerModal
         visible={datePickerOpen}
@@ -1975,8 +2207,9 @@ function AddExpenseSheet({ visible, onClose, onSave, isDark, colors }) {
   );
 }
 const AS = StyleSheet.create({
-  sheet:       { paddingTop: 10 },
-  handle:      { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: '#9CA3AF', marginBottom: 14 },
+  sheet:       { paddingTop: 6 },
+  handleWrap:  { alignItems: 'center', paddingVertical: 10, paddingHorizontal: 60 },
+  handle:      { width: 40, height: 4, borderRadius: 2, backgroundColor: '#9CA3AF' },
   headerRow:   { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 18, marginBottom: 14 },
   title:       { fontSize: 19, fontWeight: '800' },
   closeBtn:    { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
@@ -2002,11 +2235,14 @@ const AS = StyleSheet.create({
 
 export default function ExpensesScreen() {
   const { colors, isDark }   = useTheme();
+  const insets               = useSafeAreaInsets();
   const {
     transactions, budgets, loading,
     selectedMonth, selectedYear,
     setMonth, fetchTransactions, fetchBudgets, fetchGoals,
     createTransaction, upsertBudget,
+    monthlyBudgetCap, setMonthlyBudgetCap,
+    fetchUserPreferences,
   } = useExpensesStore();
 
   const [activeTab, setActiveTab] = useState('Overview');
@@ -2014,6 +2250,7 @@ export default function ExpensesScreen() {
 
   useEffect(() => {
     const now = new Date();
+    fetchUserPreferences();
     fetchTransactions(now.getMonth(), now.getFullYear());
     fetchBudgets(now.getMonth(), now.getFullYear());
     fetchGoals();
@@ -2051,6 +2288,28 @@ export default function ExpensesScreen() {
 
   return (
     <View style={{ flex: 1 }}>
+      {/* ── Top bar: home + title ── */}
+      <View style={{
+        flexDirection: 'row', alignItems: 'center',
+        paddingTop: insets.top + 6, paddingBottom: 8,
+        paddingHorizontal: 16,
+        backgroundColor: isDark ? '#0F0C1D' : '#F2F1F8',
+      }}>
+        <TouchableOpacity
+          onPress={() => router.replace('/(app)/overview')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={{ width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(108,99,255,0.10)' }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="home-outline" size={18} color={ACCENT} />
+        </TouchableOpacity>
+        <Text style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '800', color: colors.textPrimary, letterSpacing: 0.2 }}>
+          Expenses
+        </Text>
+        {/* balance the home button */}
+        <View style={{ width: 36 }} />
+      </View>
+
       {loading && activeTab === 'Overview' && (
         <View style={{ position: 'absolute', top: 30, alignSelf: 'center', zIndex: 10 }}>
           <ActivityIndicator color={ACCENT} />
@@ -2064,7 +2323,7 @@ export default function ExpensesScreen() {
         <TransactionsTab transactions={transactions} onDelete={handleDeleteTx} isDark={isDark} colors={colors} />
       )}
       {activeTab === 'Budget' && (
-        <BudgetTab transactions={transactions} budgets={budgets} onUpdateBudget={handleUpdateBudget} month={selectedMonth} year={selectedYear} onChangeMonth={(m, y) => setMonth(m, y)} isDark={isDark} colors={colors} />
+        <BudgetTab transactions={transactions} budgets={budgets} monthlyBudgetCap={monthlyBudgetCap} onSetBudgetCap={setMonthlyBudgetCap} onUpdateBudget={handleUpdateBudget} month={selectedMonth} year={selectedYear} onChangeMonth={(m, y) => setMonth(m, y)} isDark={isDark} colors={colors} />
       )}
       {activeTab === 'AI Advisor' && (
         <AIAdvisorTab transactions={transactions} budgets={budgets} isDark={isDark} colors={colors} />

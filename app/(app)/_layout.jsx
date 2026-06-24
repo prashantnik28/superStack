@@ -2931,9 +2931,9 @@ export default function AppLayout() {
                 name="profile/change-password"
                 options={{ animation: "slide_from_right", headerShown: false }}
               />
-              {/* expenses is a tab-level screen — fade avoids slide+nav fighting */}
+              {/* expenses/index — fade avoids slide+nav fighting */}
               <Stack.Screen
-                name="expenses"
+                name="expenses/index"
                 options={{ animation: "fade", headerShown: false }}
               />
               <Stack.Screen

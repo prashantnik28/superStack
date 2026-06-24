@@ -87,7 +87,9 @@
       "Bash(awk '/^const OV = StyleSheet.create\\\\\\(\\\\{/,/^\\\\}\\\\\\);/' \"/Users/nikkiniks/Documents/Nik/Projects/smartStack/app/\\(app\\)/expenses/index.jsx\")",
       "Bash(pkill -f \"react-native\")",
       "Bash(pkill -f \"metro\")",
-      "Bash(pkill -f \"node.*expo\")"
+      "Bash(pkill -f \"node.*expo\")",
+      "Bash(ln -sf \"$\\(pwd\\)/node_modules/expo/node_modules/@expo/cli\" node_modules/@expo/cli)",
+      "Bash(/Users/nikkiniks/Documents/Nik/Projects/smartStackBackend/node_modules/.bin/tsc --noEmit --project /Users/nikkiniks/Documents/Nik/Projects/smartStackBackend/tsconfig.json)"
     ]
   }
 }

@@ -2129,6 +2129,12 @@ function getPageConfig(pathname, members) {
       title: "Change Password",
       backRoute: "/(app)/profile",
     };
+  if (pathname === "/expenses/reports")
+    return { type: "page", title: "Reports & Analytics", backRoute: "/(app)/expenses" };
+  if (pathname === "/expenses/goals")
+    return { type: "page", title: "Savings Goals", backRoute: "/(app)/expenses" };
+  if (pathname.startsWith("/expenses/transaction/"))
+    return { type: "page", title: "Edit Transaction", backRoute: "/(app)/expenses" };
   const raw = TITLES[pathname];
   if (raw === "__family-hub__")
     return { type: "family-hub", title: "Family Hub" };
@@ -2262,6 +2268,15 @@ export default function AppLayout() {
     !pathname.includes("/tracking") &&
     !pathname.includes("/expenses") &&
     !pathname.includes("/add-event");
+
+  const navAnim = useRef(new Animated.Value(showNav ? 1 : 0)).current;
+  useEffect(() => {
+    Animated.timing(navAnim, {
+      toValue: showNav ? 1 : 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+  }, [showNav]);
 
   const gradientDark = ["#000000", "#0A0A0A", "#050505", "#000000"];
   const gradientLight = ["#F6F7FC", "#F6F7FC", "#F6F7FC", "#F6F7FC"];
@@ -2896,13 +2911,7 @@ export default function AppLayout() {
           )}
 
           {/* ── Screens ── */}
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: "transparent",
-              paddingBottom: showNav ? 62 : 0,
-            }}
-          >
+          <View style={{ flex: 1, backgroundColor: "transparent", paddingBottom: showNav ? (Platform.OS === "ios" ? 82 : 62) : 0 }}>
             <Stack
               screenOptions={{
                 headerShown: false,
@@ -2911,42 +2920,38 @@ export default function AppLayout() {
               }}
             >
               <Stack.Screen
-                name="(app)/calendar/add-event"
-                options={{
-                  animation: "slide_from_bottom",
-                  presentation: "modal",
-                }}
+                name="calendar/add-event"
+                options={{ animation: "slide_from_bottom", presentation: "modal" }}
               />
               <Stack.Screen
-                name="(app)/profile/edit"
+                name="profile/edit"
                 options={{ animation: "slide_from_right", headerShown: false }}
               />
               <Stack.Screen
-                name="(app)/profile/change-password"
+                name="profile/change-password"
+                options={{ animation: "slide_from_right", headerShown: false }}
+              />
+              {/* expenses is a tab-level screen — fade avoids slide+nav fighting */}
+              <Stack.Screen
+                name="expenses"
+                options={{ animation: "fade", headerShown: false }}
+              />
+              <Stack.Screen
+                name="expenses/reports"
+                options={{ animation: "slide_from_right", headerShown: false }}
+              />
+              <Stack.Screen
+                name="expenses/goals"
+                options={{ animation: "slide_from_right", headerShown: false }}
+              />
+              <Stack.Screen
+                name="expenses/transaction/[id]"
                 options={{ animation: "slide_from_right", headerShown: false }}
               />
             </Stack>
           </View>
         </LinearGradient>
 
-        {/* ── Floating Bottom Nav — outside gradient so nothing renders below the pill ── */}
-        {showNav && (
-          <View
-            style={{
-              position: "absolute",
-              bottom: insets.bottom,
-              left: 0,
-              right: 0,
-            }}
-          >
-            <BottomNav
-              pathname={pathname}
-              isDark={isDark}
-              colors={colors}
-              onPressCenter={() => setInfoOpen(true)}
-            />
-          </View>
-        )}
       </Animated.View>
 
       {/* ── Word mode picker — rendered last so it's above all stack cards ── */}
@@ -3028,6 +3033,19 @@ export default function AppLayout() {
           ))}
         </View>
       )}
+
+      {/* ── Bottom Nav — fades in/out so it doesn't snap during screen transitions ── */}
+      <Animated.View
+        pointerEvents={showNav ? "auto" : "none"}
+        style={{ position: "absolute", bottom: 0, left: 0, right: 0, opacity: navAnim }}
+      >
+        <BottomNav
+          pathname={pathname}
+          isDark={isDark}
+          colors={colors}
+          onPressCenter={() => setInfoOpen(true)}
+        />
+      </Animated.View>
 
       <InfoPanel
         visible={infoOpen}
@@ -3121,15 +3139,13 @@ const styles = StyleSheet.create({
   },
 
   // Bottom Nav
-  floatingNavShadow: {
-    borderTopWidth: 0.5,
-    borderTopColor: "rgba(0,0,0,0.07)",
-  },
+  floatingNavShadow: {},
   floatingNavInner: {
     flexDirection: "row",
     alignItems: "center",
     overflow: "hidden",
-    paddingVertical: 6,
+    paddingTop: 6,
+    paddingBottom: Platform.OS === "ios" ? 20 : 6,
     paddingHorizontal: 4,
   },
   navItem: { flex: 1, alignItems: "center" },

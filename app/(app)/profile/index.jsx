@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../../src/context/ThemeContext';
 import { useAuthStore } from '../../../src/stores/useAuthStore';
 import { useFamilyStore } from '../../../src/stores/useFamilyStore';
+import { useExpensesStore } from '../../../src/stores/useExpensesStore';
 import GlassCard from '../../../src/components/ui/GlassCard';
 
 const ACTIVITY = [
@@ -28,6 +29,7 @@ export default function ProfileScreen() {
   const { colors, isDark, toggleTheme } = useTheme();
   const { user, logout, refreshUser } = useAuthStore();
   const { members, family, fetchFamily } = useFamilyStore();
+  const { currency, setCurrency } = useExpensesStore();
 
   const [toggles, setToggles] = useState({
     'Push Notifications': true,
@@ -63,6 +65,13 @@ export default function ProfileScreen() {
 
   const handleSettingPress = (label) => {
     switch (label) {
+      case 'Currency':
+        Alert.alert('Currency', 'Choose your preferred currency', [
+          { text: '₹ INR (Indian Rupee)', onPress: () => setCurrency('INR'), style: currency === 'INR' ? 'default' : 'default' },
+          { text: '$ USD (US Dollar)',     onPress: () => setCurrency('USD'), style: currency === 'USD' ? 'default' : 'default' },
+          { text: 'Cancel', style: 'cancel' },
+        ]);
+        return;
       case 'Edit Profile':       return router.push('/(app)/profile/edit');
       case 'Change Password':    return router.push('/(app)/profile/change-password');
       case 'Connected Devices':  return router.push('/(app)/settings/devices');
@@ -85,6 +94,7 @@ export default function ProfileScreen() {
         { label: 'Location Sharing', icon: 'location', color: '#4CAF82', toggle: true },
         { label: 'Dark Mode', icon: 'moon', color: '#6C63FF', toggle: true },
         { label: 'Email Digests', icon: 'mail', color: '#FFB347', toggle: true },
+        { label: 'Currency', icon: 'cash', color: '#4CAF82', toggle: false, value: currency === 'USD' ? '$ USD' : '₹ INR' },
       ],
     },
     {

@@ -81,7 +81,13 @@
       "Bash(npx acorn *)",
       "Bash(npx babel *)",
       "Bash(npx --yes @babel/core@7 --presets @babel/preset-react app/\\\\\\(app\\\\\\)/tracking/index.jsx)",
-      "Bash(kill -9 71252)"
+      "Bash(kill -9 71252)",
+      "Bash(xargs ls -la)",
+      "Bash(xargs ls)",
+      "Bash(awk '/^const OV = StyleSheet.create\\\\\\(\\\\{/,/^\\\\}\\\\\\);/' \"/Users/nikkiniks/Documents/Nik/Projects/smartStack/app/\\(app\\)/expenses/index.jsx\")",
+      "Bash(pkill -f \"react-native\")",
+      "Bash(pkill -f \"metro\")",
+      "Bash(pkill -f \"node.*expo\")"
     ]
   }
 }

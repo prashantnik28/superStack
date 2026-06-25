@@ -5,69 +5,70 @@ const MEMBER_COLORS = [
   '#6C63FF', '#FF6B9D', '#4CAF82', '#FFB347', '#3B82F6', '#9C27B0', '#26C6DA',
 ];
 
-// Dev default data — stays visible when no real family exists yet
-const DEFAULT_MEMBERS = [
-  { id: '1', name: 'Aarav', color: '#6C63FF', status: 'At School',   age: 9,  gender: 'male',   role: 'member', uniqueId: '', avatar: null, email: '',
-    lastLocation: { latitude: 28.4810, longitude: 77.5122 }, lastLocationAt: new Date().toISOString() },
-  { id: '2', name: 'Myra',  color: '#FF6B9D', status: 'Dance Class', age: 7,  gender: 'female', role: 'member', uniqueId: '', avatar: null, email: '',
-    lastLocation: { latitude: 28.4680, longitude: 77.4968 }, lastLocationAt: new Date().toISOString() },
-  { id: '3', name: 'Rajan', color: '#4CAF82', status: 'At Work',     age: 38, gender: 'male',   role: 'admin',  uniqueId: '', avatar: null, email: '',
-    lastLocation: { latitude: 28.4900, longitude: 77.5085 }, lastLocationAt: new Date().toISOString() },
-];
 
-const DEFAULT_FAMILY = {
-  _id: 'dev',
-  name: 'Singh Family',
-  plan: 'free',
-  inviteCode: 'DEVMODE1',
-  adminId: '3',
-  memberCount: 3,
-  limit: 5,
-  canAddMore: true,
-  needsUpgrade: false,
-  atAbsoluteMax: false,
-};
-
-function colorFromIndex(i) {
-  return MEMBER_COLORS[i % MEMBER_COLORS.length];
-}
+function colorFromIndex(i) { return MEMBER_COLORS[i % MEMBER_COLORS.length]; }
 
 function mapMember(u, i) {
   return {
-    id: String(u._id),
-    uniqueId: u.uniqueId || '',
-    username: u.username || '',
-    name: u.name || 'Unknown',
-    email: u.email || '',
-    avatar: u.avatar || null,
-    role: u.role || 'member',
-    color: colorFromIndex(i),
-    status: 'Active',
+    id:        String(u._id),
+    uniqueId:  u.uniqueId  || '',
+    username:  u.username  || '',
+    name:      u.name      || 'Unknown',
+    email:     u.email     || '',
+    avatar:    u.avatar    || null,
+    role:      u.role      || 'member',
+    color:     colorFromIndex(i),
+    status:    'Active',
+  };
+}
+
+function mapDependent(d, offset = 0) {
+  return {
+    id:       String(d.id || d._id),
+    name:     d.name,
+    age:      d.age    ?? null,
+    gender:   d.gender ?? null,
+    color:    d.color  || colorFromIndex(offset),
+    emoji:    d.emoji  || '👶',
+    role:     'child',
+    avatar:   null,
+    email:    '',
+    status:   'At Home',
+    uniqueId: '',
   };
 }
 
 export const useFamilyStore = create((set, get) => ({
-  family: DEFAULT_FAMILY,
-  members: DEFAULT_MEMBERS,
-  isAdmin: true,
-  loading: false,
-  error: null,
+  family:         null,
+  members:        [],
+  dependents:     [],
+  pendingInvites: [],
+  isAdmin:        true,
+  loading:        false,
+  error:          null,
+
+  reset: () => set({
+    family: null, members: [], dependents: [],
+    pendingInvites: [], isAdmin: false, loading: false, error: null,
+  }),
+
+  // ── Family ─────────────────────────────────────────────────────────────────
 
   fetchFamily: async () => {
     set({ loading: true, error: null });
     try {
       const { data } = await api.get('/family');
-      const { family, members, isAdmin } = data.data;
+      const { family, members, dependents = [], isAdmin } = data.data;
       set({
         family,
-        members: members.map(mapMember),
+        members:    members.map(mapMember),
+        dependents: dependents.map((d, i) => mapDependent(d, members.length + i)),
         isAdmin,
         loading: false,
       });
     } catch (err) {
       if (err.response?.status === 404) {
-        // No real family yet — fall back to dev defaults so screen isn't empty
-        set({ family: DEFAULT_FAMILY, members: DEFAULT_MEMBERS, isAdmin: true, loading: false });
+        set({ family: null, members: [], dependents: [], isAdmin: false, loading: false });
       } else {
         set({ error: err.message, loading: false });
       }
@@ -76,15 +77,65 @@ export const useFamilyStore = create((set, get) => ({
 
   createFamily: async (name) => {
     const { data } = await api.post('/family', { name });
-    const { family, members, isAdmin } = data.data;
-    set({ family, members: members.map(mapMember), isAdmin });
+    const { family, members, dependents = [], isAdmin } = data.data;
+    set({ family, members: members.map(mapMember), dependents: dependents.map(mapDependent), isAdmin });
     return data.data;
   },
+
+  updateFamily: async (updates) => {
+    const { data } = await api.patch('/family', updates);
+    set({ family: data.data });
+    return data.data;
+  },
+
+  leaveFamily: async () => {
+    await api.delete('/family/leave');
+    set({ family: null, members: [], dependents: [], isAdmin: false });
+  },
+
+  // ── Search ─────────────────────────────────────────────────────────────────
 
   searchUser: async (query) => {
     const { data } = await api.get(`/family/search?q=${encodeURIComponent(query)}`);
     return data.data;
   },
+
+  // ── Invites ────────────────────────────────────────────────────────────────
+
+  sendInvite: async (query) => {
+    const { data } = await api.post('/family/invite', { query });
+    return data.data;
+  },
+
+  fetchPendingInvites: async () => {
+    try {
+      const { data } = await api.get('/family/invites/pending');
+      set({ pendingInvites: data.data || [] });
+      return data.data || [];
+    } catch {
+      return [];
+    }
+  },
+
+  acceptInvite: async (inviteId) => {
+    const { data } = await api.post(`/family/invite/${inviteId}/accept`);
+    const { family, members, dependents = [], isAdmin } = data.data;
+    set({
+      family,
+      members:        members.map(mapMember),
+      dependents:     dependents.map((d, i) => mapDependent(d, members.length + i)),
+      isAdmin,
+      pendingInvites: get().pendingInvites.filter(inv => inv.id !== inviteId),
+    });
+    return data.data;
+  },
+
+  declineInvite: async (inviteId) => {
+    await api.post(`/family/invite/${inviteId}/decline`);
+    set({ pendingInvites: get().pendingInvites.filter(inv => inv.id !== inviteId) });
+  },
+
+  // ── Direct member management ───────────────────────────────────────────────
 
   addMember: async (userId) => {
     const { data } = await api.post('/family/members', { userId });
@@ -95,7 +146,7 @@ export const useFamilyStore = create((set, get) => ({
 
   removeMember: async (memberId) => {
     const prev = get().members;
-    set({ members: prev.filter((m) => m.id !== memberId) });
+    set({ members: prev.filter(m => m.id !== memberId) });
     try {
       const { data } = await api.delete(`/family/members/${memberId}`);
       set({ members: data.data.members.map(mapMember) });
@@ -105,22 +156,44 @@ export const useFamilyStore = create((set, get) => ({
     }
   },
 
-  updateFamily: async (updates) => {
-    const { data } = await api.patch('/family', updates);
-    set({ family: data.data });
-    return data.data;
-  },
-
   joinFamily: async (inviteCode) => {
     const { data } = await api.post('/family/join', { inviteCode });
-    const { family, members, isAdmin } = data.data;
-    set({ family, members: members.map(mapMember), isAdmin });
+    const { family, members, dependents = [], isAdmin } = data.data;
+    set({ family, members: members.map(mapMember), dependents: dependents.map(mapDependent), isAdmin });
     return data.data;
   },
 
-  leaveFamily: async () => {
-    await api.delete('/family/leave');
-    set({ family: DEFAULT_FAMILY, members: DEFAULT_MEMBERS, isAdmin: true });
+  // ── Dependents ────────────────────────────────────────────────────────────
+
+  addDependent: async (dto) => {
+    const { data } = await api.post('/family/dependents', dto);
+    const dep = data.data;
+    set(s => ({
+      dependents: [...s.dependents, mapDependent(dep, s.members.length + s.dependents.length)],
+    }));
+    return dep;
+  },
+
+  updateDependent: async (id, dto) => {
+    const { data } = await api.patch(`/family/dependents/${id}`, dto);
+    const updated = data.data;
+    set(s => ({
+      dependents: s.dependents.map((d, i) =>
+        d.id === id ? mapDependent(updated, s.members.length + i) : d
+      ),
+    }));
+    return updated;
+  },
+
+  removeDependent: async (id) => {
+    set(s => ({ dependents: s.dependents.filter(d => d.id !== id) }));
+    try {
+      await api.delete(`/family/dependents/${id}`);
+    } catch (err) {
+      // rollback on failure
+      await get().fetchFamily();
+      throw err;
+    }
   },
 
   setMembers: (members) => set({ members }),

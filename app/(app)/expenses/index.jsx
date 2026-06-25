@@ -7,10 +7,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgGradient, Stop, Line as SvgLine, Text as SvgText } from 'react-native-svg';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../../src/context/ThemeContext';
 import { useExpensesStore } from '../../../src/stores/useExpensesStore';
 import GlassCard from '../../../src/components/ui/GlassCard';
+import AppBottomNav from '../../../src/components/ui/AppBottomNav';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
@@ -156,62 +156,15 @@ function WeeklyBarChart({ transactions, isDark }) {
 }
 
 
-// ── Expenses Bottom Nav ───────────────────────────────────────────────────────
+// ── Expenses Tab List ─────────────────────────────────────────────────────────
 
 const EXP_TABS = [
-  { id: 'Overview',     label: 'Overview', icon: 'pie-chart-outline', iconOn: 'pie-chart'   },
-  { id: 'Transactions', label: 'Txns',     icon: 'receipt-outline',   iconOn: 'receipt'     },
+  { id: 'Overview',     label: 'Overview', icon: 'pie-chart-outline', iconOn: 'pie-chart' },
+  { id: 'Transactions', label: 'Txns',     icon: 'receipt-outline',   iconOn: 'receipt'   },
   { center: true },
-  { id: 'Budget',       label: 'Budget',   icon: 'wallet-outline',    iconOn: 'wallet'      },
-  { id: 'AI Advisor',   label: 'AI',       icon: 'sparkles-outline',  iconOn: 'sparkles'    },
+  { id: 'Budget',       label: 'Budget',   icon: 'wallet-outline',    iconOn: 'wallet'    },
+  { id: 'AI Advisor',   label: 'AI',       icon: 'sparkles-outline',  iconOn: 'sparkles'  },
 ];
-
-function ExpensesBottomNav({ active, onChange, onAdd, isDark }) {
-  const barBg = isDark ? 'rgba(14,10,30,0.82)' : 'rgba(255,255,255,0.82)';
-  return (
-    <View style={EN.shadow}>
-      <View style={[EN.inner, { backgroundColor: Platform.OS !== 'ios' ? barBg : 'transparent' }]}>
-        {Platform.OS === 'ios' && (
-          <>
-            <BlurView intensity={isDark ? 72 : 62} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(14,10,30,0.18)' : 'rgba(255,255,255,0.22)' }]} />
-          </>
-        )}
-        {EXP_TABS.map((t, i) => {
-          if (t.center) {
-            return (
-              <View key="fab" style={EN.fabWrap}>
-                <TouchableOpacity onPress={onAdd} activeOpacity={0.85} style={[EN.fab, { backgroundColor: ACCENT }]}>
-                  <Ionicons name="add" size={26} color="#fff" />
-                </TouchableOpacity>
-              </View>
-            );
-          }
-          const on = active === t.id;
-          return (
-            <TouchableOpacity key={t.id} onPress={() => onChange(t.id)} activeOpacity={0.75} style={EN.item}>
-              <View style={EN.itemInner}>
-                <Ionicons name={on ? t.iconOn : t.icon} size={22} color={on ? ACCENT : isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.32)'} />
-                <Text style={[EN.lbl, { color: on ? ACCENT : isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.32)', fontWeight: on ? '700' : '500' }]}>{t.label}</Text>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-const EN = StyleSheet.create({
-  shadow:    {},
-  inner:     { flexDirection: 'row', alignItems: 'center', overflow: 'hidden', paddingVertical: 6, paddingHorizontal: 4, paddingBottom: Platform.OS === 'ios' ? 18 : 6 },
-  item:      { flex: 1, alignItems: 'center' },
-  itemInner: { alignItems: 'center', gap: 3, paddingVertical: 8, paddingHorizontal: 10, minWidth: 60 },
-  lbl:       { fontSize: 10.5, letterSpacing: 0.1 },
-  fabWrap:   { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  fab:       { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center',
-               shadowColor: ACCENT, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.45, shadowRadius: 10, elevation: 8 },
-});
 
 // ── Month Navigator ───────────────────────────────────────────────────────────
 
@@ -2235,7 +2188,6 @@ const AS = StyleSheet.create({
 
 export default function ExpensesScreen() {
   const { colors, isDark }   = useTheme();
-  const insets               = useSafeAreaInsets();
   const {
     transactions, budgets, loading,
     selectedMonth, selectedYear,
@@ -2288,28 +2240,6 @@ export default function ExpensesScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* ── Top bar: home + title ── */}
-      <View style={{
-        flexDirection: 'row', alignItems: 'center',
-        paddingTop: insets.top + 6, paddingBottom: 8,
-        paddingHorizontal: 16,
-        backgroundColor: isDark ? '#0F0C1D' : '#F2F1F8',
-      }}>
-        <TouchableOpacity
-          onPress={() => router.replace('/(app)/overview')}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={{ width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(108,99,255,0.10)' }}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="home-outline" size={18} color={ACCENT} />
-        </TouchableOpacity>
-        <Text style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '800', color: colors.textPrimary, letterSpacing: 0.2 }}>
-          Expenses
-        </Text>
-        {/* balance the home button */}
-        <View style={{ width: 36 }} />
-      </View>
-
       {loading && activeTab === 'Overview' && (
         <View style={{ position: 'absolute', top: 30, alignSelf: 'center', zIndex: 10 }}>
           <ActivityIndicator color={ACCENT} />
@@ -2329,7 +2259,14 @@ export default function ExpensesScreen() {
         <AIAdvisorTab transactions={transactions} budgets={budgets} isDark={isDark} colors={colors} />
       )}
 
-      <ExpensesBottomNav active={activeTab} onChange={setActiveTab} onAdd={() => setAddOpen(true)} isDark={isDark} />
+      <AppBottomNav
+        tabs={EXP_TABS}
+        active={activeTab}
+        onPress={(t) => setActiveTab(t.id)}
+        onAdd={() => setAddOpen(true)}
+        isDark={isDark}
+        accentColor={ACCENT}
+      />
       <AddExpenseSheet visible={addOpen} onClose={() => setAddOpen(false)} onSave={handleAdd} isDark={isDark} colors={colors} />
     </View>
   );

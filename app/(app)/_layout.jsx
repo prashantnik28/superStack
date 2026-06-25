@@ -25,8 +25,11 @@ import { useTheme } from "../../src/context/ThemeContext";
 import { useServiceStore } from "../../src/stores/useServiceStore";
 import { useFamilyStore } from "../../src/stores/useFamilyStore";
 import { useAuthStore } from "../../src/stores/useAuthStore";
+import { usePantryStore } from "../../src/stores/usePantryStore";
+import { useCalendarStore } from "../../src/stores/useCalendarStore";
 import { useNotificationsStore } from "../../src/stores/useNotificationsStore";
 import api from "../../src/lib/api";
+import AppBottomNav from "../../src/components/ui/AppBottomNav";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 const DRAWER_W = SCREEN_W * 0.78;
@@ -106,22 +109,29 @@ const NAV = {
       route: "/(app)/kitchen",
     },
     {
-      label: "Scan",
-      icon: "barcode",
-      iconOff: "barcode-outline",
-      route: "/(app)/kitchen/scan",
-    },
-    {
       label: "Expiry",
       icon: "time",
       iconOff: "time-outline",
-      route: "/(app)/kitchen/expiry",
+      route: "/(app)/kitchen",
     },
     {
-      label: "Shopping",
+      label: "Scan",
+      icon: "barcode",
+      iconOff: "barcode-outline",
+      center: true,
+      route: "/(app)/kitchen/scan",
+    },
+    {
+      label: "Shop",
       icon: "cart",
       iconOff: "cart-outline",
-      route: "/(app)/kitchen/shopping",
+      route: "/(app)/kitchen",
+    },
+    {
+      label: "Meals",
+      icon: "restaurant",
+      iconOff: "restaurant-outline",
+      route: "/(app)/kitchen",
     },
   ],
 };
@@ -242,117 +252,32 @@ function GlassLayer({ isDark, intensityMult = 1 }) {
 
 // ── Bottom Nav ─────────────────────────────────────────────────────────────────
 function BottomNav({ pathname, isDark, colors, onPressCenter }) {
-  const service = getService(pathname);
-  const tabs = NAV[service] || NAV.overview;
+  const service     = getService(pathname);
+  const tabs        = NAV[service] || NAV.overview;
   const accentColor = SERVICE_COLORS[service] || colors.primary;
 
-  const isActive = (route) => {
-    const clean = route.replace("/(app)", "");
-    const ROOT_ROUTES = [
-      "/overview",
-      "/wellbeing",
-      "/wardrobe",
-      "/kitchen",
-      "/calendar",
-      "/profile",
-      "/services",
-    ];
+  const ROOT_ROUTES = ["/overview", "/wellbeing", "/wardrobe", "/kitchen", "/calendar", "/profile", "/services"];
+  const isActive = (tab) => {
+    const clean = tab.route.replace("/(app)", "");
     if (pathname === clean) return true;
     if (ROOT_ROUTES.includes(clean)) return false;
     return pathname.startsWith(clean);
   };
 
-  const barBg = isDark ? "rgba(14,10,30,0.82)" : "rgba(255,255,255,0.82)";
+  const handlePress = (tab) => {
+    if (isActive(tab)) DeviceEventEmitter.emit("scrollToTop", tab.route);
+    else router.push(tab.route);
+  };
 
   return (
-    <View style={styles.floatingNavShadow}>
-      <View
-        style={[
-          styles.floatingNavInner,
-          {
-            backgroundColor: Platform.OS !== "ios" ? barBg : "transparent",
-          },
-        ]}
-      >
-        {Platform.OS === "ios" && (
-          <>
-            <BlurView
-              intensity={isDark ? 72 : 62}
-              tint={isDark ? "dark" : "light"}
-              style={StyleSheet.absoluteFill}
-            />
-            {/* Very light tint so pill has subtle contrast without going opaque */}
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  backgroundColor: isDark
-                    ? "rgba(14,10,30,0.18)"
-                    : "rgba(255,255,255,0.22)",
-                },
-              ]}
-            />
-          </>
-        )}
-
-        {tabs.map((tab) => {
-          if (tab.center) {
-            return (
-              <View key="center" style={styles.navFabWrap}>
-                <TouchableOpacity
-                  style={[styles.navFab, { backgroundColor: accentColor }]}
-                  activeOpacity={0.85}
-                  onPress={onPressCenter}
-                >
-                  <Ionicons name="add" size={26} color="#fff" />
-                </TouchableOpacity>
-              </View>
-            );
-          }
-          const active = isActive(tab.route);
-          return (
-            <TouchableOpacity
-              key={tab.label}
-              onPress={() => {
-                if (active) DeviceEventEmitter.emit("scrollToTop", tab.route);
-                else router.push(tab.route);
-              }}
-              style={styles.navItem}
-              activeOpacity={0.75}
-            >
-              <View style={styles.navActiveWrap}>
-                <Ionicons
-                  name={active ? tab.icon : tab.iconOff}
-                  size={22}
-                  color={
-                    active
-                      ? accentColor
-                      : isDark
-                        ? "rgba(255,255,255,0.45)"
-                        : "rgba(0,0,0,0.35)"
-                  }
-                />
-                <Text
-                  style={[
-                    styles.navLabel,
-                    {
-                      color: active
-                        ? accentColor
-                        : isDark
-                          ? "rgba(255,255,255,0.45)"
-                          : "rgba(0,0,0,0.35)",
-                      fontWeight: active ? "700" : "500",
-                    },
-                  ]}
-                >
-                  {tab.label}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
+    <AppBottomNav
+      tabs={tabs}
+      isActive={isActive}
+      onPress={handlePress}
+      onAdd={onPressCenter}
+      isDark={isDark}
+      accentColor={accentColor}
+    />
   );
 }
 
@@ -1202,6 +1127,7 @@ function InfoPanel({ visible, onClose, insets }) {
 // ── Notification Panel ─────────────────────────────────────────────────────────
 function NotifPanel({ visible, onClose, insets, notifs, onMarkAllRead }) {
   const { isDark } = useTheme();
+  const { markRead } = useNotificationsStore();
   const slideX = useRef(new Animated.Value(SCREEN_W)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
 
@@ -1345,8 +1271,13 @@ function NotifPanel({ visible, onClose, insets, notifs, onMarkAllRead }) {
               <Text style={[styles.notifGroup, { color: sub }]}>NEW</Text>
             )}
             {unread.map((n) => (
-              <View
+              <TouchableOpacity
                 key={n.id}
+                activeOpacity={0.75}
+                onPress={() => {
+                  markRead(n.id);
+                  if (n.actionRoute) { onClose(); setTimeout(() => router.push(n.actionRoute), 300); }
+                }}
                 style={[
                   styles.notifCard,
                   {
@@ -1386,7 +1317,7 @@ function NotifPanel({ visible, onClose, insets, notifs, onMarkAllRead }) {
                 <View
                   style={[styles.unreadDot, { backgroundColor: "#6C63FF" }]}
                 />
-              </View>
+              </TouchableOpacity>
             ))}
 
             {read.length > 0 && (
@@ -1395,8 +1326,12 @@ function NotifPanel({ visible, onClose, insets, notifs, onMarkAllRead }) {
               </Text>
             )}
             {read.map((n) => (
-              <View
+              <TouchableOpacity
                 key={n.id}
+                activeOpacity={0.7}
+                onPress={() => {
+                  if (n.actionRoute) { onClose(); setTimeout(() => router.push(n.actionRoute), 300); }
+                }}
                 style={[
                   styles.notifCard,
                   {
@@ -1446,7 +1381,7 @@ function NotifPanel({ visible, onClose, insets, notifs, onMarkAllRead }) {
                     {n.time}
                   </Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
             <View style={{ height: 24 }} />
           </ScrollView>
@@ -1498,58 +1433,14 @@ function SettingsDrawer({ visible, onClose, wordMode, setWordMode }) {
   const handleLogout = () => {
     onClose();
     setTimeout(() => {
+      // Wipe all user-specific store data before clearing auth
+      usePantryStore.getState().reset();
+      useCalendarStore.getState().reset();
       logout();
       router.replace("/(auth)/welcome");
     }, 300);
   };
 
-  const SUBSCRIBED = [
-    {
-      id: "c",
-      name: "Cleaning",
-      icon: "sparkles",
-      color: "#6C63FF",
-      status: "active",
-      detail: "Tomorrow, 10 AM",
-      route: "/(app)/services",
-    },
-    {
-      id: "m",
-      name: "Milk Delivery",
-      icon: "water",
-      color: "#4CAF82",
-      status: "active",
-      detail: "Daily · 7:00 AM",
-      route: "/(app)/services",
-    },
-    {
-      id: "g",
-      name: "Grocery",
-      icon: "cart",
-      color: "#FFB347",
-      status: "active",
-      detail: "Wed, 3–5 PM",
-      route: "/(app)/kitchen/shopping",
-    },
-    {
-      id: "r",
-      name: "Repair",
-      icon: "construct",
-      color: "#FF6B9D",
-      status: "on-demand",
-      detail: "On request",
-      route: "/(app)/services",
-    },
-    {
-      id: "l",
-      name: "Laundry",
-      icon: "shirt",
-      color: "#9C27B0",
-      status: "active",
-      detail: "Pickup: Friday",
-      route: "/(app)/services",
-    },
-  ];
 
   const nav = (route) => {
     onClose();
@@ -1639,10 +1530,10 @@ function SettingsDrawer({ visible, onClose, wordMode, setWordMode }) {
               >
                 {user?.email || "somya@example.com"}
               </Text>
-              <View style={styles.planChip}>
+              <TouchableOpacity style={styles.planChip} activeOpacity={0.8} onPress={() => { nav('/(app)/settings/premium'); }}>
                 <Ionicons name="star" size={10} color="#FFD700" />
-                <Text style={styles.planChipTxt}>Family Pro</Text>
-              </View>
+                <Text style={styles.planChipTxt}>Upgrade</Text>
+              </TouchableOpacity>
             </View>
           </View>
           <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
@@ -1715,49 +1606,6 @@ function SettingsDrawer({ visible, onClose, wordMode, setWordMode }) {
               })}
             </View>
 
-            <Text
-              style={[
-                styles.drawerSec,
-                { color: isDark ? "#9CA3AF" : "#6B7280" },
-              ]}
-            >
-              SUBSCRIBED SERVICES
-            </Text>
-            {SUBSCRIBED.map((svc) => (
-              <TouchableOpacity
-                key={svc.id}
-                style={styles.drawerItem}
-                activeOpacity={0.75}
-                onPress={() => nav(svc.route)}
-              >
-                <View
-                  style={[
-                    styles.drawerItemIcon,
-                    { backgroundColor: svc.color },
-                  ]}
-                >
-                  <Ionicons name={svc.icon} size={18} color="#fff" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={[
-                      styles.drawerItemLabel,
-                      { color: isDark ? "#F0EEFF" : "#16163A" },
-                    ]}
-                  >
-                    {svc.name}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.drawerSvcDetail,
-                      { color: isDark ? "#9CA3AF" : "#6B7280" },
-                    ]}
-                  >
-                    {svc.detail}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
             {/* ── Card Corners ── */}
             <Text
               style={[
@@ -2104,6 +1952,7 @@ function getPageConfig(pathname, members) {
       type: "page",
       title: SERVICES[pathname],
       backRoute: "/(app)/overview",
+      homeIcon: pathname === "/expenses" || pathname === "/kitchen",
     };
 
   const TITLES = {
@@ -2116,10 +1965,12 @@ function getPageConfig(pathname, members) {
     "/wardrobe/suggestions": "Suggestions",
     "/kitchen/expiry": "Expiry Tracker",
     "/kitchen/shopping": "Shopping",
+    "/kitchen/scan": "Barcode Scan",
     "/settings/privacy": "Privacy & Security",
     "/settings/devices": "Connected Devices",
     "/settings/language": "Language",
     "/settings/help": "Help & Support",
+    "/settings/premium": "Premium",
   };
   if (pathname === "/profile/edit")
     return { type: "page", title: "Edit Profile", backRoute: "/(app)/profile" };
@@ -2135,6 +1986,18 @@ function getPageConfig(pathname, members) {
     return { type: "page", title: "Savings Goals", backRoute: "/(app)/expenses" };
   if (pathname.startsWith("/expenses/transaction/"))
     return { type: "page", title: "Edit Transaction", backRoute: "/(app)/expenses" };
+  if (pathname === "/kitchen/expiry")
+    return { type: "page", title: "Expiry Tracker", backRoute: "/(app)/kitchen" };
+  if (pathname === "/kitchen/shopping")
+    return { type: "page", title: "Shopping", backRoute: "/(app)/kitchen" };
+  if (pathname === "/kitchen/scan")
+    return { type: "page", title: "Barcode Scan", backRoute: "/(app)/kitchen" };
+  if (pathname.startsWith("/kitchen/recipe/"))
+    return { type: "page", title: "Recipe", backRoute: "/(app)/kitchen" };
+  if (pathname === "/kitchen/meal-plan")
+    return { type: "page", title: "Meal Planner", backRoute: "/(app)/kitchen" };
+  if (pathname === "/kitchen/add-recipe")
+    return { type: "page", title: "Add Recipe", backRoute: "/(app)/kitchen" };
   const raw = TITLES[pathname];
   if (raw === "__family-hub__")
     return { type: "family-hub", title: "Family Hub" };
@@ -2267,6 +2130,7 @@ export default function AppLayout() {
     !pathname.includes("/cctv") &&
     !pathname.includes("/tracking") &&
     !pathname.includes("/expenses") &&
+    !pathname.includes("/kitchen") &&
     !pathname.includes("/add-event");
 
   const navAnim = useRef(new Animated.Value(showNav ? 1 : 0)).current;
@@ -2712,8 +2576,8 @@ export default function AppLayout() {
         </Animated.View>
       )}
 
-      {/* ── Main screen ── */}
-      <Animated.View style={[StyleSheet.absoluteFill, { overflow: "hidden" }]}>
+      {/* ── Main screen ── bottom:-1 pushes iOS overflow:hidden clip boundary 1px below screen, eliminating the layer artifact line */}
+      <Animated.View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: -1, overflow: "hidden" }}>
         <LinearGradient
           colors={isDark ? gradientDark : gradientLight}
           style={{ flex: 1 }}
@@ -2886,15 +2750,16 @@ export default function AppLayout() {
                 <>
                   <TouchableOpacity
                     onPress={() =>
-                      pageConfig.backRoute
-                        ? router.push(pageConfig.backRoute)
-                        : router.back()
+                      router.canGoBack()
+                        ? router.back()
+                        : router.replace(pageConfig.backRoute ?? '/(app)/overview')
                     }
                     style={styles.hBtn}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Ionicons
-                      name="chevron-back"
-                      size={24}
+                      name={pageConfig.homeIcon ? "home-outline" : "chevron-back"}
+                      size={pageConfig.homeIcon ? 22 : 24}
                       color={colors.primary}
                     />
                   </TouchableOpacity>
@@ -2931,10 +2796,13 @@ export default function AppLayout() {
                 name="profile/change-password"
                 options={{ animation: "slide_from_right", headerShown: false }}
               />
-              {/* expenses/index — fade avoids slide+nav fighting */}
+              <Stack.Screen
+                name="kitchen/index"
+                options={{ animation: "slide_from_right", headerShown: false }}
+              />
               <Stack.Screen
                 name="expenses/index"
-                options={{ animation: "fade", headerShown: false }}
+                options={{ animation: "slide_from_right", headerShown: false }}
               />
               <Stack.Screen
                 name="expenses/reports"
@@ -2947,6 +2815,10 @@ export default function AppLayout() {
               <Stack.Screen
                 name="expenses/transaction/[id]"
                 options={{ animation: "slide_from_right", headerShown: false }}
+              />
+              <Stack.Screen
+                name="settings/premium"
+                options={{ animation: "slide_from_bottom", headerShown: false }}
               />
             </Stack>
           </View>
@@ -3034,10 +2906,10 @@ export default function AppLayout() {
         </View>
       )}
 
-      {/* ── Bottom Nav — fades in/out so it doesn't snap during screen transitions ── */}
+      {/* ── Bottom Nav — full-screen overlay so AppBottomNav can anchor to screen bottom ── */}
       <Animated.View
-        pointerEvents={showNav ? "auto" : "none"}
-        style={{ position: "absolute", bottom: 0, left: 0, right: 0, opacity: navAnim }}
+        pointerEvents={showNav ? "box-none" : "none"}
+        style={[StyleSheet.absoluteFill, { opacity: navAnim }]}
       >
         <BottomNav
           pathname={pathname}
@@ -3138,30 +3010,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // Bottom Nav
+  // Bottom Nav — styles moved to AppBottomNav component
   floatingNavShadow: {},
-  floatingNavInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    overflow: "hidden",
-    paddingTop: 6,
-    paddingBottom: Platform.OS === "ios" ? 20 : 6,
-    paddingHorizontal: 4,
-  },
-  navItem: { flex: 1, alignItems: "center" },
-  navActiveWrap: {
-    alignItems: "center",
-    gap: 3,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    minWidth: 64,
-  },
-  navLabel: { fontSize: 10.5, letterSpacing: 0.1 },
-  navFabWrap: { flex: 1, alignItems: "center", justifyContent: "center" },
   navFab: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#6C63FF",

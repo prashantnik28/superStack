@@ -10,6 +10,8 @@ const TYPE_META = {
   family_member_removed:  { icon: 'person-remove-outline',color: '#EF4444' },
   family_joined:          { icon: 'people',               color: '#4CAF82' },
   expense_created:        { icon: 'wallet-outline',       color: '#FFB347' },
+  expense_daily_log:      { icon: 'pencil-outline',       color: '#6C63FF' },
+  expense_weekly_summary: { icon: 'bar-chart-outline',    color: '#4CAF82' },
   budget_alert:           { icon: 'alert-circle-outline', color: '#EF4444' },
   kitchen_expiry:         { icon: 'time-outline',         color: '#FF6B6B' },
   kitchen_item_added:     { icon: 'cart',                 color: '#4CAF82' },

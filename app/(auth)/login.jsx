@@ -11,6 +11,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useAuthStore } from '../../src/stores/useAuthStore';
+import { usePantryStore } from '../../src/stores/usePantryStore';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -18,14 +19,10 @@ const GOOGLE_CLIENT_ID = '806565486713-3s682bf657vmb0omlfqplh7r55941plq.apps.goo
 const redirectUri = 'https://auth.expo.io/@prashantnik/smartstack';
 
 // ── Quick-login accounts (dev convenience) ────────────────────────────────
+// Aarav and Myra are children in the family — no login accounts
 const DEV_ACCOUNTS = [
   { label: 'Prashant', username: 'prashantsingh', password: 'qwertyuiop', color: '#6C63FF' },
   { label: 'Somya',    username: 'somyasingh',    password: 'qwertyuiop', color: '#FF6B9D' },
-  { label: 'Aarav',    username: 'aarav.singh',   password: 'family123',  color: '#4CAF82' },
-  { label: 'Myra',     username: 'myra.singh',    password: 'family123',  color: '#FFB347' },
-  { label: 'Arjun',    username: 'arjun.singh',   password: 'family123',  color: '#3B82F6' },
-  { label: 'Riya',     username: 'riya.sharma',   password: 'family123',  color: '#9C27B0' },
-  { label: 'Kabir',    username: 'kabir.nair',    password: 'family123',  color: '#26C6DA' },
 ];
 
 export default function LoginScreen() {
@@ -56,6 +53,7 @@ export default function LoginScreen() {
     setLoading(true); setError('');
     try {
       await googleLogin(token);
+      usePantryStore.getState().fetchItems();
       router.replace('/(app)/overview');
     } catch {
       setError('Google sign-in failed. Please try again.');
@@ -69,6 +67,7 @@ export default function LoginScreen() {
     setLoading(true); setError('');
     try {
       await login(identifier.trim(), password);
+      usePantryStore.getState().fetchItems();
       router.replace('/(app)/overview');
     } catch (e) {
       setError(e?.response?.data?.message || 'Login failed. Check your credentials.');
@@ -85,6 +84,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login(acc.username, acc.password);
+      usePantryStore.getState().fetchItems();
       router.replace('/(app)/overview');
     } catch (e) {
       setError(e?.response?.data?.message || 'Login failed.');

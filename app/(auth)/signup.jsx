@@ -12,6 +12,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useAuthStore } from '../../src/stores/useAuthStore';
+import { usePantryStore } from '../../src/stores/usePantryStore';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -99,6 +100,7 @@ export default function SignupScreen() {
     setLoading(true); setError('');
     try {
       await googleLogin(token);
+      usePantryStore.getState().fetchItems();
       router.replace('/(app)/overview');
     } catch {
       setError('Google sign-in failed. Please try again.');
@@ -132,6 +134,7 @@ export default function SignupScreen() {
         dob:       `${dobDay.padStart(2,'0')}/${dobMonth.padStart(2,'0')}/${dobYear}`,
         password,
       });
+      usePantryStore.getState().fetchItems();
       router.replace('/(app)/overview');
     } catch (e) {
       setError(e?.response?.data?.message || 'Sign up failed. Please try again.');

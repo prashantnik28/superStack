@@ -57,6 +57,8 @@ export const useCalendarStore = create((set, get) => ({
   error:        null,
   editingEvent: null,
 
+  reset: () => set({ events: [], todayGlance: [], loading: false, error: null, editingEvent: null }),
+
   setEditingEvent:   (event) => set({ editingEvent: event }),
   clearEditingEvent: ()      => set({ editingEvent: null }),
 

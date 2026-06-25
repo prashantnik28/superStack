@@ -248,7 +248,9 @@ function MemberBubble({ member, colors, onPress }) {
           <View
             style={[styles.memberAvatar, { backgroundColor: member.color }]}
           >
-            <Text style={styles.memberInitial}>{member.name[0]}</Text>
+            {member.role === 'child' && member.emoji
+              ? <Text style={{ fontSize: 18 }}>{member.emoji}</Text>
+              : <Text style={styles.memberInitial}>{member.name[0]}</Text>}
           </View>
           <View
             style={[styles.memberStatusDot, { backgroundColor: statusColor }]}
@@ -505,10 +507,12 @@ function GlanceActionModal({ item, onClose, colors, isDark }) {
 
 export default function Overview() {
   const { colors, isDark, radius } = useTheme();
-  const { members } = useFamilyStore();
+  const { members, dependents, fetchFamily } = useFamilyStore();
   const { unreadCount } = useNotificationsStore();
   const { todayGlance, fetchTodayGlance } = useCalendarStore();
-  const atHome = members.filter((m) => m.status === "At Home").length;
+  const allPeople = [...members, ...dependents];
+  const atHome = allPeople.filter((m) => m.status === "At Home").length;
+  const totalCount = allPeople.length;
 
   // Merge real API data over mock fallback — real data wins when available
   const rawGlance = todayGlance.length > 0 ? todayGlance : GLANCE;
@@ -554,6 +558,7 @@ export default function Overview() {
       useNativeDriver: true,
     }).start();
     fetchTodayGlance();
+    fetchFamily();
   }, []);
 
   useEffect(() => {
@@ -669,16 +674,26 @@ export default function Overview() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.membersScroll}
               >
-                {members.map((m) => (
-                  <MemberBubble
-                    key={m.id}
-                    member={m}
-                    colors={colors}
-                    onPress={() =>
-                      router.push(`/(app)/overview/member/${m.id}`)
-                    }
-                  />
-                ))}
+                {allPeople.length === 0 ? (
+                  <TouchableOpacity
+                    onPress={() => router.push('/(app)/overview/family')}
+                    activeOpacity={0.7}
+                    style={{ justifyContent: 'center', paddingVertical: 8, paddingLeft: 4 }}
+                  >
+                    <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Tap to set up your family →</Text>
+                  </TouchableOpacity>
+                ) : (
+                  allPeople.map((m) => (
+                    <MemberBubble
+                      key={m.id}
+                      member={m}
+                      colors={colors}
+                      onPress={() =>
+                        router.push(`/(app)/overview/member/${m.id}`)
+                      }
+                    />
+                  ))
+                )}
               </ScrollView>
               <LinearGradient
                 colors={
@@ -708,7 +723,7 @@ export default function Overview() {
                 <Text
                   style={[styles.familyCount, { color: colors.textSecondary }]}
                 >
-                  {members.length} Members
+                  {totalCount} Member{totalCount !== 1 ? 's' : ''}
                 </Text>
               </View>
               <Ionicons
@@ -730,7 +745,7 @@ export default function Overview() {
               },
               {
                 icon: "navigate-outline",
-                value: String(members.length - atHome),
+                value: String(totalCount - atHome),
                 label: "Away",
                 color: "#FFB347",
               },

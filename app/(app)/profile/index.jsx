@@ -28,7 +28,7 @@ const MEMBER_COLORS = ['#6C63FF', '#FF6B9D', '#4CAF82', '#FFB347', '#3B82F6', '#
 export default function ProfileScreen() {
   const { colors, isDark, toggleTheme } = useTheme();
   const { user, logout, refreshUser } = useAuthStore();
-  const { members, family, fetchFamily } = useFamilyStore();
+  const { members, family, fetchFamily, isAdmin } = useFamilyStore();
   const { currency, setCurrency } = useExpensesStore();
 
   const [toggles, setToggles] = useState({
@@ -74,6 +74,7 @@ export default function ProfileScreen() {
         return;
       case 'Edit Profile':       return router.push('/(app)/profile/edit');
       case 'Change Password':    return router.push('/(app)/profile/change-password');
+      case 'Family Settings':    return router.push('/(app)/profile/family-settings');
       case 'Connected Devices':  return router.push('/(app)/settings/devices');
       case 'Language':           return router.push('/(app)/settings/language');
       case 'Privacy & Security': return router.push('/(app)/settings/privacy');
@@ -102,6 +103,7 @@ export default function ProfileScreen() {
       items: [
         { label: 'Edit Profile', icon: 'person', color: '#6C63FF', toggle: false },
         { label: 'Change Password', icon: 'lock-closed', color: '#FF6B6B', toggle: false, hidden: user?.provider === 'google' },
+        { label: 'Family Settings', icon: 'shield-checkmark', color: '#6C63FF', toggle: false, hidden: !isAdmin, badge: 'Admin' },
         { label: 'Connected Devices', icon: 'phone-portrait', color: '#4CAF82', toggle: false, badge: '2' },
         { label: 'Language', icon: 'language', color: '#FFB347', toggle: false, value: 'English' },
       ],

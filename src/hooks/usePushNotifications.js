@@ -5,15 +5,22 @@ import { Platform } from 'react-native';
 import api from '../lib/api';
 import { useAuthStore } from '../stores/useAuthStore';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge:  true,
-  }),
-});
+// Notifications don't work in Expo Go — only in dev builds / production
+const IS_EXPO_GO = Constants.appOwnership === 'expo';
+
+if (!IS_EXPO_GO) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge:  true,
+    }),
+  });
+}
 
 async function registerForPushNotificationsAsync() {
+  if (IS_EXPO_GO) return null;
+
   const { status: existing } = await Notifications.getPermissionsAsync();
   let finalStatus = existing;
   if (existing !== 'granted') {
@@ -40,7 +47,7 @@ export function usePushNotifications() {
   const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || IS_EXPO_GO) return;
 
     registerForPushNotificationsAsync()
       .then((expoPushToken) => {

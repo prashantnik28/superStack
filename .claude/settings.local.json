@@ -89,7 +89,12 @@
       "Bash(pkill -f \"metro\")",
       "Bash(pkill -f \"node.*expo\")",
       "Bash(ln -sf \"$\\(pwd\\)/node_modules/expo/node_modules/@expo/cli\" node_modules/@expo/cli)",
-      "Bash(/Users/nikkiniks/Documents/Nik/Projects/smartStackBackend/node_modules/.bin/tsc --noEmit --project /Users/nikkiniks/Documents/Nik/Projects/smartStackBackend/tsconfig.json)"
+      "Bash(/Users/nikkiniks/Documents/Nik/Projects/smartStackBackend/node_modules/.bin/tsc --noEmit --project /Users/nikkiniks/Documents/Nik/Projects/smartStackBackend/tsconfig.json)",
+      "Bash(xargs -I{} basename {})",
+      "Bash(pkill -f \"npm run\")",
+      "Bash(pkill -f \"node.*nest\")",
+      "Bash(pkill -f \"expo\")",
+      "Bash(awk '{print $2}')"
     ]
   }
 }

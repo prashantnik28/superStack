@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import { useTheme } from "../../src/context/ThemeContext";
 import { useServiceStore } from "../../src/stores/useServiceStore";
 import { useFamilyStore } from "../../src/stores/useFamilyStore";
@@ -1971,6 +1972,7 @@ function getPageConfig(pathname, members) {
     "/settings/language": "Language",
     "/settings/help": "Help & Support",
     "/settings/premium": "Premium",
+    "/profile/family-settings": "Family Settings",
   };
   if (pathname === "/profile/edit")
     return { type: "page", title: "Edit Profile", backRoute: "/(app)/profile" };
@@ -2104,9 +2106,9 @@ export default function AppLayout() {
     return () => clearInterval(interval);
   }, []);
 
-  // Register Expo push token with backend when user is available
+  // Register Expo push token with backend when user is available (dev build only)
   useEffect(() => {
-    if (!user) return;
+    if (!user || Constants.appOwnership === 'expo') return;
     (async () => {
       try {
         const { status } = await Notifications.requestPermissionsAsync();
@@ -2131,6 +2133,7 @@ export default function AppLayout() {
     !pathname.includes("/tracking") &&
     !pathname.includes("/expenses") &&
     !pathname.includes("/kitchen") &&
+    !pathname.includes("/wardrobe") &&
     !pathname.includes("/add-event");
 
   const navAnim = useRef(new Animated.Value(showNav ? 1 : 0)).current;
@@ -2819,6 +2822,10 @@ export default function AppLayout() {
               <Stack.Screen
                 name="settings/premium"
                 options={{ animation: "slide_from_bottom", headerShown: false }}
+              />
+              <Stack.Screen
+                name="profile/family-settings"
+                options={{ animation: "slide_from_right", headerShown: false }}
               />
             </Stack>
           </View>

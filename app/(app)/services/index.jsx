@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useTheme } from '../../../src/context/ThemeContext';
+import { useFamilyStore } from '../../../src/stores/useFamilyStore';
 import GlassCard from '../../../src/components/ui/GlassCard';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
@@ -61,10 +62,14 @@ const STATUS_LABEL = { active: 'Active', 'on-demand': 'On Demand' };
 export default function ServicesScreen() {
   const { isDark } = useTheme();
   const { width: screenW } = useWindowDimensions();
+  const { myPermissions, isAdmin } = useFamilyStore();
 
   const txt = isDark ? '#F0EEFF' : '#16163A';
   const sub = isDark ? '#9CA3AF' : '#6B7280';
   const divColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+
+  // Filter services the current user has permission to access (admin always sees all)
+  const canAccess = (serviceId) => isAdmin || myPermissions[serviceId] !== false;
 
   // 3-per-row grid: padding 16 each side + 2 gaps of 8 between tiles
   const tileW = Math.floor((screenW - 32 - 16) / 3);
@@ -155,7 +160,7 @@ export default function ServicesScreen() {
             </TouchableOpacity>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mostUsedRow}>
-            {MOST_USED.map(s => (
+            {MOST_USED.filter(s => canAccess(s.id)).map(s => (
               <TouchableOpacity
                 key={s.id}
                 style={styles.mostUsedItem}
@@ -177,10 +182,10 @@ export default function ServicesScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.secLabel, { color: sub }]}>ALL SERVICES</Text>
-            <Text style={[styles.subDetail, { color: sub }]}>{ALL_SERVICES.length} apps</Text>
+            <Text style={[styles.subDetail, { color: sub }]}>{ALL_SERVICES.filter(s => canAccess(s.id)).length} apps</Text>
           </View>
           <View style={styles.allGrid}>
-            {ALL_SERVICES.map(s => {
+            {ALL_SERVICES.filter(s => canAccess(s.id)).map(s => {
               const isAvail = !!s.route;
               return (
                 <TouchableOpacity

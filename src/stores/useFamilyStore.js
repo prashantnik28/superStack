@@ -38,18 +38,26 @@ function mapDependent(d, offset = 0) {
   };
 }
 
+const ALL_SERVICES = ['kitchen', 'wardrobe', 'calendar', 'expenses', 'tracking', 'wellbeing', 'cctv'];
+const fullAccess = () => Object.fromEntries(ALL_SERVICES.map(s => [s, true]));
+
 export const useFamilyStore = create((set, get) => ({
   family:         null,
   members:        [],
   dependents:     [],
   pendingInvites: [],
-  isAdmin:        true,
+  // permissions: { [memberId]: { kitchen: true, wardrobe: false, ... } } — admin view
+  allPermissions: {},
+  // myPermissions: what the current user is allowed to access
+  myPermissions:  fullAccess(),
+  isAdmin:        false,
   loading:        false,
   error:          null,
 
   reset: () => set({
     family: null, members: [], dependents: [],
-    pendingInvites: [], isAdmin: false, loading: false, error: null,
+    pendingInvites: [], allPermissions: {}, myPermissions: fullAccess(),
+    isAdmin: false, loading: false, error: null,
   }),
 
   // ── Family ─────────────────────────────────────────────────────────────────
@@ -58,12 +66,13 @@ export const useFamilyStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const { data } = await api.get('/family');
-      const { family, members, dependents = [], isAdmin } = data.data;
+      const { family, members, dependents = [], isAdmin, myPermissions } = data.data;
       set({
         family,
-        members:    members.map(mapMember),
-        dependents: dependents.map((d, i) => mapDependent(d, members.length + i)),
+        members:      members.map(mapMember),
+        dependents:   dependents.map((d, i) => mapDependent(d, members.length + i)),
         isAdmin,
+        myPermissions: myPermissions ?? fullAccess(),
         loading: false,
       });
     } catch (err) {
@@ -197,4 +206,30 @@ export const useFamilyStore = create((set, get) => ({
   },
 
   setMembers: (members) => set({ members }),
+
+  // ── Permissions ────────────────────────────────────────────────────────────
+
+  fetchAllPermissions: async () => {
+    try {
+      const { data } = await api.get('/family/permissions');
+      set({ allPermissions: data.data || {} });
+      return data.data || {};
+    } catch {
+      return {};
+    }
+  },
+
+  updatePermission: async (memberId, service, allowed) => {
+    // Optimistic update
+    const prev = get().allPermissions;
+    const memberPerms = { ...(prev[memberId] ?? fullAccess()), [service]: allowed };
+    set({ allPermissions: { ...prev, [memberId]: memberPerms } });
+    try {
+      await api.patch(`/family/permissions/${memberId}`, { service, allowed });
+    } catch (err) {
+      // Rollback
+      set({ allPermissions: prev });
+      throw err;
+    }
+  },
 }));

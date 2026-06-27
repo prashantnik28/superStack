@@ -94,7 +94,11 @@
       "Bash(pkill -f \"npm run\")",
       "Bash(pkill -f \"node.*nest\")",
       "Bash(pkill -f \"expo\")",
-      "Bash(awk '{print $2}')"
+      "Bash(awk '{print $2}')",
+      "Bash(npx babel-parser *)",
+      "Bash(bash *)",
+      "Bash(npx --no-install acorn --ecma2020 --module app/\\\\\\(app\\\\\\)/wardrobe/index.jsx)",
+      "Bash(npx --no-install acorn --ecma2020 --module \"app/\\(app\\)/wardrobe/index.jsx\")"
     ]
   }
 }

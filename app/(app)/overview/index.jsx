@@ -952,194 +952,110 @@ export default function Overview() {
           </View>
 
           <GlassCard style={styles.bentoWrap}>
-            {/* ── Top block: CCTV + right col ── */}
-            <View style={styles.bentoTopBlock}>
-              {/* CCTV */}
-              <TouchableOpacity
-                style={[
-                  styles.bentoCell,
-                  styles.bentoCCTV,
-                  {
-                    padding: 0,
-                    overflow: "hidden",
-                    backgroundColor: "#000",
-                    borderRadius: radius,
-                  },
-                ]}
-                onPress={() => router.push("/(app)/cctv")}
-                activeOpacity={0.9}
-              >
-                <VideoView
-                  player={cctvPlayer}
-                  style={StyleSheet.absoluteFillObject}
-                  contentFit="cover"
-                  nativeControls={false}
-                />
-                <View
-                  style={[
-                    StyleSheet.absoluteFillObject,
-                    { backgroundColor: "rgba(0,0,0,0.28)" },
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.bentoLive,
-                    { position: "absolute", top: 8, left: 8 },
-                  ]}
-                >
-                  <View style={styles.liveDot} />
-                  <Text style={styles.liveTxt}>LIVE</Text>
-                </View>
-                <View style={styles.cctvBottomOverlay}>
-                  <View
-                    style={[styles.cctvIconBadge, { borderRadius: radius }]}
-                  >
-                    <Ionicons name="videocam" size={12} color="#fff" />
-                  </View>
-                  <View>
-                    <Text style={[styles.bentoCellTitle, { color: "#fff" }]}>
-                      CCTV
-                    </Text>
-                    <Text
-                      style={[
-                        styles.bentoCellSub,
-                        { color: "rgba(255,255,255,0.75)" },
-                      ]}
-                    >
-                      3 cameras · Live
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
+            {/* ── Top block: redesigned ── */}
+            <View style={{ gap: 8, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 6 }}>
 
-              {/* Right column */}
-              <View style={styles.bentoRightCol}>
-                <View style={styles.bentoRightRow}>
+              {/* Row 1: CCTV + Kitchen/Tracking */}
+              <View style={{ flexDirection: "row", gap: 8, height: 148 }}>
+
+                {/* CCTV */}
+                <TouchableOpacity style={{ flex: 1.2, borderRadius: radius, overflow: "hidden", backgroundColor: "#000" }}
+                  onPress={() => router.push("/(app)/cctv")} activeOpacity={0.9}>
+                  <VideoView player={cctvPlayer} style={StyleSheet.absoluteFillObject} contentFit="cover" nativeControls={false} />
+                  {/* top scrim for badge legibility */}
+                  <LinearGradient colors={["rgba(0,0,0,0.45)", "transparent"]}
+                    style={{ position: "absolute", top: 0, left: 0, right: 0, height: 44 }} />
+                  {/* bottom scrim */}
+                  <LinearGradient colors={["transparent", "rgba(0,0,0,0.72)"]}
+                    style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 60 }} />
+                  {/* LIVE badge */}
+                  <View style={{ position: "absolute", top: 9, left: 9, flexDirection: "row", alignItems: "center", gap: 4,
+                    backgroundColor: "rgba(0,0,0,0.52)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999 }}>
+                    <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: "#4CAF82" }} />
+                    <Text style={{ color: "#4CAF82", fontSize: 8, fontWeight: "800", letterSpacing: 0.8 }}>LIVE</Text>
+                  </View>
+                  {/* Camera count badge top-right */}
+                  <View style={{ position: "absolute", top: 9, right: 9, flexDirection: "row", alignItems: "center", gap: 3,
+                    backgroundColor: "rgba(108,99,255,0.85)", paddingHorizontal: 7, paddingVertical: 4, borderRadius: 999 }}>
+                    <Ionicons name="videocam" size={9} color="#fff" />
+                    <Text style={{ color: "#fff", fontSize: 8, fontWeight: "800" }}>3</Text>
+                  </View>
+                  {/* Bottom info */}
+                  <View style={{ position: "absolute", bottom: 10, left: 10, right: 10, flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: "#fff", fontWeight: "800", fontSize: 12 }}>CCTV</Text>
+                      <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 9, fontWeight: "500" }}>3 cameras · Live</Text>
+                    </View>
+                    <View style={{ backgroundColor: "rgba(255,255,255,0.18)", paddingHorizontal: 7, paddingVertical: 3, borderRadius: 999 }}>
+                      <Text style={{ color: "#fff", fontSize: 8, fontWeight: "700" }}>View →</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+
+                {/* Right: Kitchen + Tracking stacked */}
+                <View style={{ flex: 1, gap: 8 }}>
                   {/* Kitchen */}
-                  <TouchableOpacity
-                    style={[
-                      styles.bentoCell,
-                      {
-                        flex: 1,
-                        backgroundColor: isDark
-                          ? "rgba(255,159,74,0.14)"
-                          : "#FFF4E0",
-                        padding: 8,
-                        borderRadius: radius,
-                      },
-                    ]}
-                    onPress={() => router.push("/(app)/kitchen")}
-                    activeOpacity={0.85}
-                  >
-                    <LinearGradient
-                      colors={["#FF9F4A", "#FF6B35"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={[styles.bentoCellIcon, { borderRadius: radius }]}
-                    >
-                      <Ionicons name="restaurant" size={12} color="#fff" />
+                  <TouchableOpacity style={{ flex: 1, borderRadius: radius, overflow: "hidden" }}
+                    onPress={() => router.push("/(app)/kitchen")} activeOpacity={0.85}>
+                    <LinearGradient colors={["#FF9F4A", "#FF6B35"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                      style={{ flex: 1, padding: 10, justifyContent: "space-between" }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                        <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 7.5, fontWeight: "700", letterSpacing: 0.6 }}>KITCHEN</Text>
+                        <Ionicons name="restaurant" size={13} color="rgba(255,255,255,0.85)" />
+                      </View>
+                      <View>
+                        <Text style={{ color: "#fff", fontWeight: "900", fontSize: 28, letterSpacing: -1, lineHeight: 30 }}>3</Text>
+                        <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 8.5, fontWeight: "600" }}>expiring soon</Text>
+                      </View>
                     </LinearGradient>
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.bentoCellTitle,
-                        { color: colors.textPrimary },
-                      ]}
-                    >
-                      Kitchen
-                    </Text>
-                    <Text
-                      numberOfLines={1}
-                      style={[styles.bentoCellMetric, { color: "#FF9F4A" }]}
-                    >
-                      3 expiring
-                    </Text>
                   </TouchableOpacity>
 
                   {/* Tracking */}
-                  <TouchableOpacity
-                    style={[
-                      styles.bentoCell,
-                      {
-                        flex: 1,
-                        backgroundColor: isDark
-                          ? "rgba(59,130,246,0.14)"
-                          : "#EBF4FF",
-                        padding: 8,
-                        borderRadius: radius,
-                      },
-                    ]}
-                    onPress={() => router.push("/(app)/tracking")}
-                    activeOpacity={0.85}
-                  >
-                    <LinearGradient
-                      colors={["#4B8EF8", "#6C63FF"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={[styles.bentoCellIcon, { borderRadius: radius }]}
-                    >
-                      <Ionicons name="navigate-circle" size={12} color="#fff" />
+                  <TouchableOpacity style={{ flex: 1, borderRadius: radius, overflow: "hidden" }}
+                    onPress={() => router.push("/(app)/tracking")} activeOpacity={0.85}>
+                    <LinearGradient colors={["#4B8EF8", "#6C63FF"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                      style={{ flex: 1, padding: 10, justifyContent: "space-between" }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                        <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 7.5, fontWeight: "700", letterSpacing: 0.6 }}>TRACKING</Text>
+                        <Ionicons name="navigate-circle" size={13} color="rgba(255,255,255,0.85)" />
+                      </View>
+                      <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 5 }}>
+                        <View>
+                          <Text style={{ color: "#fff", fontWeight: "900", fontSize: 28, letterSpacing: -1, lineHeight: 30 }}>2</Text>
+                          <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 8.5, fontWeight: "600" }}>active devices</Text>
+                        </View>
+                        <View style={{ flexDirection: "row", gap: 3, paddingBottom: 5 }}>
+                          {[0, 1].map((i) => (
+                            <View key={i} style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: "#fff", opacity: i === 0 ? 1 : 0.4 }} />
+                          ))}
+                        </View>
+                      </View>
                     </LinearGradient>
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.bentoCellTitle,
-                        { color: colors.textPrimary },
-                      ]}
-                    >
-                      Tracking
-                    </Text>
-                    <Text
-                      numberOfLines={1}
-                      style={[styles.bentoCellMetric, { color: "#4B8EF8" }]}
-                    >
-                      2 active
-                    </Text>
                   </TouchableOpacity>
                 </View>
-
-                {/* Expenses */}
-                <TouchableOpacity
-                  style={[
-                    styles.bentoCell,
-                    styles.bentoExpenses,
-                    {
-                      backgroundColor: isDark
-                        ? "rgba(16,185,129,0.12)"
-                        : "#E6FFF5",
-                      borderRadius: radius,
-                    },
-                  ]}
-                  onPress={() => router.push("/(app)/expenses")}
-                  activeOpacity={0.85}
-                >
-                  <LinearGradient
-                    colors={["#10B981", "#059669"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[styles.bentoCellIcon, { borderRadius: radius }]}
-                  >
-                    <Ionicons name="wallet" size={13} color="#fff" />
-                  </LinearGradient>
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.bentoCellTitle,
-                        { color: colors.textPrimary },
-                      ]}
-                    >
-                      Expenses
-                    </Text>
-                    <Text
-                      style={[styles.bentoCellMetric, { color: "#10B981" }]}
-                    >
-                      ₹45,230
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={12} color="#10B981" />
-                </TouchableOpacity>
               </View>
+
+              {/* Row 2: Expenses — full width */}
+              <TouchableOpacity style={{ borderRadius: radius, overflow: "hidden" }}
+                onPress={() => router.push("/(app)/expenses")} activeOpacity={0.85}>
+                <LinearGradient colors={["#10B981", "#059669"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, paddingVertical: 11 }}>
+                  <View style={{ width: 38, height: 38, borderRadius: radius + 2, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}>
+                    <Ionicons name="wallet" size={17} color="#fff" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 8.5, fontWeight: "700", letterSpacing: 0.6 }}>EXPENSES</Text>
+                    <Text style={{ color: "#fff", fontWeight: "900", fontSize: 20, letterSpacing: -0.5, lineHeight: 22 }}>₹45,230</Text>
+                  </View>
+                  <View style={{ alignItems: "flex-end", gap: 4 }}>
+                    <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 8, fontWeight: "600" }}>75% of budget</Text>
+                    <View style={{ width: 64, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.25)" }}>
+                      <View style={{ height: "100%", width: "75%", borderRadius: 2, backgroundColor: "#fff" }} />
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={15} color="rgba(255,255,255,0.8)" />
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
 
             {/* ── Bottom shelf: gradient icon tiles, one full row ── */}

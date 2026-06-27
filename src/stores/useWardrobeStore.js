@@ -46,9 +46,41 @@ export const useWardrobeStore = create((set, get) => ({
 
   // ── CRUD ──────────────────────────────────────────────────────────────────
 
+  // Upload a local file URI to the server; returns the public URL
+  uploadImage: async (localUri) => {
+    if (!localUri || localUri.startsWith('http')) return localUri;
+    const filename = localUri.split('/').pop() || 'wardrobe.jpg';
+    const ext = (filename.split('.').pop() || 'jpg').toLowerCase();
+    const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+    const form = new FormData();
+    form.append('file', { uri: localUri, name: filename, type: mimeType });
+    const { data } = await api.post('/wardrobe/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data.data?.url ?? null;
+  },
+
   addItem: async (dto) => {
-    const { data } = await api.post('/wardrobe/items', dto);
+    // Upload image first if it's still a local file URI
+    let imageUrl = dto.imageUrl ?? null;
+    if (imageUrl && !imageUrl.startsWith('http')) {
+      imageUrl = await get().uploadImage(imageUrl);
+    }
+    const { data } = await api.post('/wardrobe/items', { ...dto, imageUrl });
     const newItem = data.data;
+    if (!newItem) throw new Error('Invalid response from server');
+    set(s => ({ items: [newItem, ...s.items], stats: { ...s.stats, total: s.stats.total + 1 } }));
+    return newItem;
+  },
+
+  // Adds to local state without API (used when backend is unavailable)
+  addItemLocal: (dto) => {
+    const newItem = {
+      id: `local_${Date.now()}`,
+      wears: 0, isClean: true, imageUrl: dto.imageUrl || null,
+      createdAt: new Date().toISOString(),
+      ...dto,
+    };
     set(s => ({ items: [newItem, ...s.items], stats: { ...s.stats, total: s.stats.total + 1 } }));
     return newItem;
   },

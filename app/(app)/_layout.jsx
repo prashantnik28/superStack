@@ -1930,6 +1930,8 @@ function getPageConfig(pathname, members) {
   // Screens that render their own headers
   if (pathname === "/calendar" || pathname === "/calendar/add-event")
     return { type: "screenManaged" };
+  if (pathname === "/wardrobe")
+    return { type: "screenManaged" };
 
   const STANDALONE = {
     "/notifications": "Notifications",
